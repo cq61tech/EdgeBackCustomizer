@@ -39,3 +39,13 @@ jobs:
         with:
           name: EdgeBackCustomizer-debug
           path: app/build/outputs/apk/debug/*.apk
+
+      - name: Kotlin errors
+        if: failure()
+        run: |
+          {
+            echo '### Kotlin errors'
+            echo '```'
+            grep -E '^e: ' build.log | sed 's#file:///home/runner/work/[^/]*/[^/]*/##' | cut -c1-400 | fold -w 70
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
