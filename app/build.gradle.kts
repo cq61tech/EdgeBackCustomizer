@@ -32,7 +32,7 @@ dependencies {
     // Xposed API: only needed at compile time, the framework provides it.
     compileOnly("io.github.libxposed:api:102.0.0")
 
-    val composeBom = platform("androidx.compose:compose-bom:2026.09.00")
+    val composeBom = platform("androidx.compose:compose-bom:2026.05.00")
     implementation(composeBom)
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-core")
