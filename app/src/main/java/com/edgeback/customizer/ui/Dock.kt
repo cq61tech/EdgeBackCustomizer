@@ -1,12 +1,14 @@
 package com.edgeback.customizer.ui
 
-import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
@@ -17,8 +19,6 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,6 +29,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.edgeback.customizer.Prefs
 import com.edgeback.customizer.R
 
 private class DockItem(val icon: ImageVector, val labelRes: Int)
@@ -39,54 +41,58 @@ private val items = listOf(
     DockItem(Icons.Filled.Settings, R.string.nav_settings),
 )
 
+/** Bottom bar. Floating pill by default; width, height, opacity, text size and gap come from settings. */
 @Composable
-fun Dock(selected: Int, onSelect: (Int) -> Unit, floating: Boolean, labels: Boolean) {
+fun Dock(selected: Int, onSelect: (Int) -> Unit, prefs: Prefs) {
     val cs = MaterialTheme.colorScheme
-    if (!floating) {
-        NavigationBar {
-            items.forEachIndexed { i, item ->
-                NavigationBarItem(
-                    selected = selected == i,
-                    onClick = { onSelect(i) },
-                    icon = { Icon(item.icon, contentDescription = null) },
-                    label = { Text(stringResource(item.labelRes)) },
-                    alwaysShowLabel = labels,
-                )
-            }
-        }
+    val floating = prefs.dockFloating.value
+    val h = prefs.dockHeight.value.dp
+    val shape = if (floating) {
+        RoundedCornerShape(h / 2)
     } else {
-        Box(
-            Modifier.fillMaxWidth().navigationBarsPadding().padding(bottom = 12.dp),
-            contentAlignment = Alignment.Center,
+        RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
+    }
+    val gap = if (floating) prefs.dockBottom.value.dp else 0.dp
+    val labels = prefs.dockLabels.value
+
+    Box(
+        Modifier.fillMaxWidth().navigationBarsPadding().padding(bottom = gap),
+        contentAlignment = Alignment.BottomCenter,
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth(if (floating) prefs.dockWidth.value / 100f else 1f)
+                .height(h),
+            shape = shape,
+            color = cs.surfaceContainerHigh.copy(alpha = prefs.dockOpacity.value / 100f),
+            shadowElevation = if (floating) 6.dp else 0.dp,
         ) {
-            Surface(
-                shape = RoundedCornerShape(32.dp),
-                color = cs.surfaceContainerHigh,
-                tonalElevation = 3.dp,
-                shadowElevation = 6.dp,
+            Row(
+                Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                Row(Modifier.padding(8.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    items.forEachIndexed { i, item ->
-                        val sel = selected == i
-                        Row(
-                            Modifier
-                                .clip(CircleShape)
-                                .background(if (sel) cs.secondaryContainer else Color.Transparent)
-                                .clickable { onSelect(i) }
-                                .padding(horizontal = 16.dp, vertical = 10.dp)
-                                .animateContentSize(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
+                items.forEachIndexed { i, item ->
+                    val sel = selected == i
+                    Box(
+                        Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .clip(CircleShape)
+                            .background(if (sel) cs.secondaryContainer else Color.Transparent)
+                            .clickable { onSelect(i) },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Icon(
                                 item.icon,
-                                contentDescription = null,
+                                contentDescription = stringResource(item.labelRes),
                                 tint = if (sel) cs.onSecondaryContainer else cs.onSurfaceVariant,
                             )
-                            if (sel || labels) {
+                            if (labels) {
                                 Text(
                                     stringResource(item.labelRes),
-                                    style = MaterialTheme.typography.labelLarge,
+                                    fontSize = prefs.dockTextSize.value.sp,
+                                    maxLines = 1,
                                     color = if (sel) cs.onSecondaryContainer else cs.onSurfaceVariant,
                                 )
                             }

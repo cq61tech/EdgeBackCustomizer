@@ -7,14 +7,29 @@
         android:localeConfig="@xml/locales_config"
         android:supportsRtl="true"
         android:theme="@style/Theme.EdgeBackCustomizer">
+
         <activity
             android:name=".MainActivity"
+            android:exported="true">
+            <!-- lets the LSPosed manager open the app even when the launcher icon is hidden -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="de.robv.android.xposed.category.MODULE_SETTINGS" />
+            </intent-filter>
+        </activity>
+
+        <!-- launcher icon lives on an alias so it can be hidden from Settings -->
+        <activity-alias
+            android:name=".LauncherAlias"
+            android:enabled="true"
             android:exported="true"
-            android:configChanges="orientation|screenSize|keyboardHidden">
+            android:icon="@mipmap/ic_launcher"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
+        </activity-alias>
     </application>
 </manifest>

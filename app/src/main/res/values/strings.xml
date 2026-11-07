@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">EdgeBackCustomizer</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="close">Close</string>
 
     <string name="nav_home">Home</string>
     <string name="nav_customize">Customize</string>
@@ -8,17 +11,23 @@
 
     <string name="quote">Even if you go back hundreds of times a day, change direction with your own rules and your own signature.</string>
 
-    <string name="status_on">LSPosed connected</string>
-    <string name="status_on_sub">%1$s %2$s · API %3$s</string>
-    <string name="status_off">LSPosed not connected</string>
+    <string name="status_title">Module status</string>
+    <string name="row_lsposed">LSPosed</string>
+    <string name="row_hooks">Back gesture hooks</string>
+    <string name="status_active">Active (%1$s %2$s · API %3$s)</string>
+    <string name="status_inactive">Not connected</string>
+    <string name="hooks_discovery">Discovery build (no changes yet)</string>
+    <string name="status_on_note">The module is injected. Changes apply after System UI restarts.</string>
     <string name="status_off_sub">Enable the module in LSPosed, select System UI in its scope, then restart System UI.</string>
+    <string name="btn_restart_systemui">Restart System UI (root)</string>
+    <string name="btn_refresh">Refresh</string>
+    <string name="toast_restarting">Restarting System UI…</string>
+    <string name="toast_no_root">Root access was not granted</string>
 
     <string name="device_title">Device info</string>
     <string name="row_device">Device</string>
     <string name="row_codename">Codename</string>
     <string name="row_android">Android</string>
-    <string name="row_lsposed">LSPosed</string>
-    <string name="row_lsposed_api">LSPosed API</string>
     <string name="row_zygisk">Zygisk</string>
     <string name="row_root">Root</string>
     <string name="tap_to_read">Tap to read (root prompt)</string>
@@ -29,15 +38,26 @@
     <string name="whatcan_title">What can you do?</string>
     <string name="whatcan_summary">Make the back gesture truly yours</string>
     <string name="whatcan_body">• Change the back pill color, opacity, corner radius or add a gradient\n• Replace the arrow with your own icon and limit stretch and scale\n• Limit the gesture to a vertical zone so it does not clash with side menus\n• Haptic feedback on or off\n• Long-swipe shortcuts: quick switch, screenshot, force close</string>
-    <string name="close">Close</string>
+
+    <string name="tile_theme">Theme</string>
+    <string name="tile_monet">Monet</string>
+    <string name="tile_dock">Dock</string>
+    <string name="on">On</string>
+    <string name="off">Off</string>
+    <string name="dock_floating_value">Floating</string>
+    <string name="dock_classic_value">Classic</string>
 
     <string name="credits_title">Credits</string>
     <string name="credits_body">Developed by @cq61tech. Open source, built with libxposed and LSPosed.</string>
     <string name="repo_button">GitHub repository</string>
 
     <string name="customize_title">Customize</string>
-    <string name="preview_title">Preview</string>
+    <string name="preview_title">Live preview</string>
+    <string name="preview_caption">Approximate preview. The real pill is drawn by System UI.</string>
+    <string name="preview_tip">Tip: tap a value to type it exactly</string>
     <string name="customize_note">The preview and options are ready. Applying them to the system gesture comes in the next phase.</string>
+    <string name="card_pill">Pill style</string>
+    <string name="card_behavior">Behavior</string>
     <string name="opt_alpha">Opacity</string>
     <string name="opt_radius">Corner radius</string>
     <string name="opt_scale">Size multiplier</string>
@@ -47,18 +67,51 @@
     <string name="settings_title">Settings</string>
     <string name="search_hint">Search settings</string>
     <string name="no_results">No matching settings</string>
+
     <string name="language_title">Language</string>
     <string name="language_system">System default</string>
     <string name="language_tr">Türkçe</string>
     <string name="language_en">English</string>
+
     <string name="theme_title">Appearance</string>
     <string name="theme_system">System</string>
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
-    <string name="monet_title">Monet colors</string>
-    <string name="monet_summary">Use your wallpaper colors</string>
+    <string name="monet_title">Use system colors (Monet)</string>
+    <string name="monet_summary">Follow your wallpaper colors</string>
+    <string name="accent_title">Accent color</string>
+    <string name="amoled_title">Pure black (AMOLED)</string>
+
+    <string name="card_bottom">Bottom bar</string>
     <string name="dock_floating_title">Floating dock</string>
-    <string name="dock_floating_summary">Detached pill instead of a full-width bar</string>
-    <string name="dock_labels_title">Dock labels</string>
-    <string name="dock_labels_summary">Always show labels under dock icons</string>
+    <string name="dock_floating_summary">Turn the bottom bar into a floating pill</string>
+    <string name="dock_width">Width</string>
+    <string name="dock_height">Height</string>
+    <string name="dock_opacity">Opacity</string>
+    <string name="dock_text">Text size</string>
+    <string name="dock_bottom">Distance from bottom</string>
+    <string name="dock_hide_title">Hide when scrolling</string>
+    <string name="dock_hide_summary">Slides away as you scroll down, returns as you scroll up</string>
+    <string name="dock_labels_title">Show labels</string>
+
+    <string name="card_module">Module and hooks</string>
+    <string name="hooks_enable_title">Enable hooks</string>
+    <string name="hooks_enable_summary">Master switch. Off means System UI runs completely stock</string>
+    <string name="debug_title">Debug logging</string>
+    <string name="debug_summary">Writes extra lines to the LSPosed module log</string>
+    <string name="hide_icon_title">Hide launcher icon</string>
+    <string name="hide_icon_summary">Open the app from the LSPosed manager instead</string>
+
+    <string name="card_diag">Diagnostics</string>
+    <string name="diag_model">Model</string>
+    <string name="diag_arch">CPU architecture</string>
+    <string name="diag_framework">Framework</string>
+    <string name="diag_module">Module</string>
+
+    <string name="card_backup">Backup and restore</string>
+    <string name="export_btn">Export</string>
+    <string name="import_btn">Import</string>
+    <string name="toast_exported">Settings exported</string>
+    <string name="toast_imported">Settings imported</string>
+    <string name="toast_failed">Something went wrong</string>
 </resources>
