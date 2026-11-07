@@ -29,6 +29,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -52,6 +53,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.edgeback.customizer.HostStatus
 import com.edgeback.customizer.ModuleStatus
 import com.edgeback.customizer.Prefs
 import com.edgeback.customizer.R
@@ -68,10 +70,12 @@ fun HomeScreen(prefs: Prefs) {
     var showInfo by remember { mutableStateOf(false) }
     var reading by remember { mutableStateOf(false) }
     var tick by remember { mutableIntStateOf(0) }
+    var host by remember { mutableStateOf<HostStatus?>(null) }
     val scope = rememberCoroutineScope()
     val restart = rememberRestartSystemUi()
 
-    val readRoot: () -> Unit = {
+    // Asks for root (first time) and reads root info + whether the module is loaded in System UI.
+    val refresh: () -> Unit = {
         if (!reading) {
             reading = true
             scope.launch {
@@ -79,15 +83,25 @@ fun HomeScreen(prefs: Prefs) {
                 prefs.rootSolution.value = r?.solution.orEmpty()
                 prefs.zygisk.value = r?.zygisk.orEmpty()
                 prefs.rootChecked.value = true
+                host = if (r != null) withContext(Dispatchers.IO) { RootInfo.readHostStatus() } else null
                 reading = false
+                tick++
             }
+        }
+    }
+
+    // If root was already granted before, check silently on open.
+    LaunchedEffect(Unit) {
+        if (prefs.rootChecked.value && prefs.rootSolution.value.isNotBlank()) {
+            host = withContext(Dispatchers.IO) { RootInfo.readHostStatus() }
+            tick++
         }
     }
 
     ScreenColumn {
         Hero()
-        StatusCard(tick = tick, onRestart = restart, onRefresh = { tick++ })
-        DeviceCard(prefs, reading, readRoot)
+        StatusCard(tick = tick, host = host, onRestart = restart, onRefresh = refresh)
+        DeviceCard(prefs, reading, refresh)
         WhatCanCard { showInfo = true }
         Tiles(prefs)
         CreditsCard()
@@ -147,25 +161,30 @@ private fun Hero() {
 }
 
 @Composable
-private fun StatusCard(tick: Int, onRestart: () -> Unit, onRefresh: () -> Unit) {
+private fun StatusCard(tick: Int, host: HostStatus?, onRestart: () -> Unit, onRefresh: () -> Unit) {
     val cs = MaterialTheme.colorScheme
     val dark = cs.background.luminance() < 0.5f
-    val on = ModuleStatus.active // re-read on every refresh (tick changes recompose this)
+    val hostLoaded = host != null && host.loadedThisBoot
+    val self = ModuleStatus.active // set when the module is injected into this app
+    val on = self || hostLoaded
     val green = greenFor(cs.primary, dark)
     val container = if (on) green.container else cs.errorContainer
     val content = if (on) green.onContainer else cs.onErrorContainer
 
+    val name = if (self) ModuleStatus.frameworkName else host?.name.orEmpty()
+    val version = if (self) ModuleStatus.frameworkVersion else host?.version.orEmpty()
+    val api = if (self) ModuleStatus.apiVersion else host?.api.orEmpty()
+
     val lsposedValue = if (on) {
-        stringResource(
-            R.string.status_active,
-            ModuleStatus.frameworkName,
-            ModuleStatus.frameworkVersion,
-            ModuleStatus.apiVersion,
-        )
+        stringResource(R.string.status_active, name, version, api)
     } else {
         stringResource(R.string.status_inactive)
     }
-    val hooksValue = if (on) stringResource(R.string.hooks_discovery) else stringResource(R.string.status_inactive)
+    val hooksValue = when {
+        hostLoaded -> stringResource(R.string.hooks_loaded)
+        self -> stringResource(R.string.hooks_discovery)
+        else -> stringResource(R.string.hooks_not_loaded)
+    }
 
     Surface(shape = CardShape, color = container, contentColor = content, modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {

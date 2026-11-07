@@ -114,7 +114,7 @@ class Prefs(ctx: Context) {
 
     // customization (not yet applied to the system gesture)
     val pillAlpha = reg(FloatPref(sp, "pill_alpha", 90f))       // %
-    val pillRadius = reg(FloatPref(sp, "pill_radius", 24f))     // dp
+    val pillRound = reg(FloatPref(sp, "pill_round", 100f))      // % (100 = full circle)
     val pillScale = reg(FloatPref(sp, "pill_scale", 1f))
     val zonePercent = reg(FloatPref(sp, "zone_percent", 100f))
     val haptic = reg(BoolPref(sp, "haptic", true))

@@ -9,10 +9,10 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -58,12 +58,12 @@ private fun App(prefs: Prefs) {
     }
     LaunchedEffect(tab) { hidden.value = false }
 
-    Box(
-        Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .nestedScroll(connection),
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background,
+        contentColor = MaterialTheme.colorScheme.onBackground,
     ) {
+      Box(Modifier.fillMaxSize().nestedScroll(connection)) {
         when (tab) {
             0 -> HomeScreen(prefs)
             1 -> CustomizeScreen(prefs)
@@ -77,5 +77,6 @@ private fun App(prefs: Prefs) {
         ) {
             Dock(selected = tab, onSelect = { tab = it }, prefs = prefs)
         }
+      }
     }
 }

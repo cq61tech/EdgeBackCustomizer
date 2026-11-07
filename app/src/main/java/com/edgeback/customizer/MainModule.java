@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 import io.github.libxposed.api.XposedModule;
 
@@ -75,6 +76,7 @@ public class MainModule extends XposedModule {
             if (!SYSTEMUI.equals(param.getPackageName())) return;
             final ClassLoader cl = param.getClassLoader();
 
+            writeStatus();
             try {
                 OUT.delete();
             } catch (Throwable ignored) {
@@ -109,15 +111,58 @@ public class MainModule extends XposedModule {
 
     /** Tells our own app (running in its own process) that the module is injected. */
     private void markActive(ClassLoader cl) {
+        final Class<?> c;
         try {
-            Class<?> c = Class.forName("com.edgeback.customizer.ModuleStatus", true, cl);
-            c.getField("frameworkName").set(null, String.valueOf(getFrameworkName()));
-            c.getField("frameworkVersion").set(null, String.valueOf(getFrameworkVersion()));
-            c.getField("frameworkVersionCode").set(null, String.valueOf(getFrameworkVersionCode()));
-            c.getField("apiVersion").set(null, String.valueOf(getApiVersion()));
+            c = Class.forName("com.edgeback.customizer.ModuleStatus", true, cl);
             c.getField("active").setBoolean(null, true);
         } catch (Throwable t) {
             Log.e(TAG, "markActive failed", t);
+            return;
+        }
+        put(c, "frameworkName", () -> String.valueOf(getFrameworkName()));
+        put(c, "frameworkVersion", () -> String.valueOf(getFrameworkVersion()));
+        put(c, "frameworkVersionCode", () -> String.valueOf(getFrameworkVersionCode()));
+        put(c, "apiVersion", () -> String.valueOf(getApiVersion()));
+    }
+
+    private static void put(Class<?> c, String field, Supplier<String> value) {
+        try {
+            c.getField(field).set(null, value.get());
+        } catch (Throwable t) {
+            Log.w(TAG, "markActive " + field, t);
+        }
+    }
+
+    private static String safe(Supplier<String> s) {
+        try {
+            return s.get();
+        } catch (Throwable t) {
+            return "";
+        }
+    }
+
+    /**
+     * Written when the module loads inside System UI. The app reads it through root,
+     * which proves the hooks really reach System UI in this boot.
+     */
+    private void writeStatus() {
+        try {
+            File f = new File("/data/user/0/com.android.systemui/files/ebc_status.txt");
+            File dir = f.getParentFile();
+            if (dir != null && !dir.exists()) dir.mkdirs();
+            long boot = System.currentTimeMillis() - android.os.SystemClock.elapsedRealtime();
+            StringBuilder sb = new StringBuilder();
+            sb.append("framework=").append(safe(() -> String.valueOf(getFrameworkName()))).append('\n');
+            sb.append("version=").append(safe(() -> String.valueOf(getFrameworkVersion()))).append('\n');
+            sb.append("versionCode=").append(safe(() -> String.valueOf(getFrameworkVersionCode()))).append('\n');
+            sb.append("api=").append(safe(() -> String.valueOf(getApiVersion()))).append('\n');
+            sb.append("time=").append(System.currentTimeMillis()).append('\n');
+            sb.append("boot=").append(boot).append('\n');
+            try (FileWriter w = new FileWriter(f, false)) {
+                w.write(sb.toString());
+            }
+        } catch (Throwable t) {
+            Log.w(TAG, "writeStatus failed", t);
         }
     }
 

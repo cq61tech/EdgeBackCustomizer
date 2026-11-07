@@ -15,6 +15,8 @@
     <string name="row_hooks">Geri hareketi hook\'ları</string>
     <string name="status_active">Etkin (%1$s %2$s · API %3$s)</string>
     <string name="status_inactive">Bağlı değil</string>
+    <string name="hooks_loaded">Sistem Arayüzü\'nde yüklü (keşif sürümü)</string>
+    <string name="hooks_not_loaded">Sistem Arayüzü\'nde yüklü değil</string>
     <string name="hooks_discovery">Keşif sürümü (henüz değişiklik yok)</string>
     <string name="status_on_note">Modül yüklendi. Değişiklikler Sistem Arayüzü yeniden başlayınca uygulanır.</string>
     <string name="status_off_sub">Modülü LSPosed\'da etkinleştir, kapsamda Sistem Arayüzü\'nü seç ve Sistem Arayüzü\'nü yeniden başlat.</string>

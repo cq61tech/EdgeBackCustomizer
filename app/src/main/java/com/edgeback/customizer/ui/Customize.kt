@@ -22,7 +22,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.edgeback.customizer.Prefs
 import com.edgeback.customizer.R
-import kotlin.math.min
 
 @Composable
 fun CustomizeScreen(prefs: Prefs) {
@@ -48,28 +47,28 @@ fun CustomizeScreen(prefs: Prefs) {
                     size = Size(5f * d, zoneH),
                     cornerRadius = CornerRadius(3f * d, 3f * d),
                 )
-                // back pill
-                val s = prefs.pillScale.value
-                val h = 96f * d * s
-                val w = 30f * d * s
-                val x0 = 14f * d
-                val top = size.height / 2f - h / 2f
-                val r = min(prefs.pillRadius.value * d, min(w, h) / 2f)
+                // back ball: always exactly centered, round by default
+                val sc = prefs.pillScale.value
+                val dia = 76f * d * sc
+                val cx = size.width / 2f
+                val cy = size.height / 2f
+                val rad = (dia / 2f) * (prefs.pillRound.value / 100f)
                 drawRoundRect(
-                    color = cs.primary.copy(alpha = prefs.pillAlpha.value / 100f),
-                    topLeft = Offset(x0, top),
-                    size = Size(w, h),
-                    cornerRadius = CornerRadius(r, r),
+                    color = cs.primaryContainer.copy(alpha = prefs.pillAlpha.value / 100f),
+                    topLeft = Offset(cx - dia / 2f, cy - dia / 2f),
+                    size = Size(dia, dia),
+                    cornerRadius = CornerRadius(rad, rad),
                 )
+                val a = dia * 0.11f
                 val arrow = Path().apply {
-                    moveTo(x0 + w * 0.64f, top + h * 0.38f)
-                    lineTo(x0 + w * 0.36f, top + h * 0.50f)
-                    lineTo(x0 + w * 0.64f, top + h * 0.62f)
+                    moveTo(cx + a, cy - dia * 0.20f)
+                    lineTo(cx - a, cy)
+                    lineTo(cx + a, cy + dia * 0.20f)
                 }
                 drawPath(
                     arrow,
-                    color = cs.onPrimary,
-                    style = Stroke(width = 3f * d, cap = StrokeCap.Round, join = StrokeJoin.Round),
+                    color = cs.onPrimaryContainer,
+                    style = Stroke(width = 5f * d * sc, cap = StrokeCap.Round, join = StrokeJoin.Round),
                 )
             }
         }
@@ -89,8 +88,8 @@ fun CustomizeScreen(prefs: Prefs) {
             SliderRow(stringResource(R.string.opt_alpha), prefs.pillAlpha.value, 20f..100f, "%") {
                 prefs.pillAlpha.value = it
             }
-            SliderRow(stringResource(R.string.opt_radius), prefs.pillRadius.value, 0f..40f, " dp") {
-                prefs.pillRadius.value = it
+            SliderRow(stringResource(R.string.opt_radius), prefs.pillRound.value, 0f..100f, "%") {
+                prefs.pillRound.value = it
             }
             SliderRow(stringResource(R.string.opt_scale), prefs.pillScale.value, 0.6f..1.6f, "x", decimals = 2) {
                 prefs.pillScale.value = it

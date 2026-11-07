@@ -3,9 +3,19 @@ package com.edgeback.customizer
 import android.content.ComponentName
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.SystemClock
 import java.util.concurrent.TimeUnit
 
 class RootResult(val solution: String, val zygisk: String)
+
+/** What the module wrote from inside System UI (see MainModule.writeStatus). */
+class HostStatus(
+    val name: String,
+    val version: String,
+    val code: String,
+    val api: String,
+    val loadedThisBoot: Boolean,
+)
 
 /** Shows or hides the launcher icon (the alias declared in the manifest). */
 fun setLauncherIconHidden(ctx: Context, hidden: Boolean) {
@@ -18,6 +28,35 @@ fun setLauncherIconHidden(ctx: Context, hidden: Boolean) {
 }
 
 object RootInfo {
+    /** Blocking. Reads the status file the module writes inside System UI. Needs root. */
+    fun readHostStatus(): HostStatus? = try {
+        val p = ProcessBuilder("su", "-c", "cat /data/user/0/com.android.systemui/files/ebc_status.txt")
+            .redirectErrorStream(true).start()
+        val out = p.inputStream.bufferedReader().readText()
+        if (!p.waitFor(8, TimeUnit.SECONDS)) {
+            p.destroy()
+            null
+        } else {
+            val m = out.lines().filter { it.contains('=') }
+                .associate { it.substringBefore('=') to it.substringAfter('=').trim() }
+            if (!m.containsKey("framework")) {
+                null
+            } else {
+                val time = m["time"]?.toLongOrNull() ?: 0L
+                val boot = System.currentTimeMillis() - SystemClock.elapsedRealtime()
+                HostStatus(
+                    m["framework"].orEmpty(),
+                    m["version"].orEmpty(),
+                    m["versionCode"].orEmpty(),
+                    m["api"].orEmpty(),
+                    time >= boot - 60_000L,
+                )
+            }
+        }
+    } catch (t: Throwable) {
+        null
+    }
+
     /** Blocking. Runs one command as root; true when it exited with 0. */
     fun exec(cmd: String): Boolean = try {
         val p = ProcessBuilder("su", "-c", cmd).redirectErrorStream(true).start()

@@ -16,6 +16,8 @@
     <string name="row_hooks">Back gesture hooks</string>
     <string name="status_active">Active (%1$s %2$s · API %3$s)</string>
     <string name="status_inactive">Not connected</string>
+    <string name="hooks_loaded">Loaded in System UI (discovery build)</string>
+    <string name="hooks_not_loaded">Not loaded in System UI</string>
     <string name="hooks_discovery">Discovery build (no changes yet)</string>
     <string name="status_on_note">The module is injected. Changes apply after System UI restarts.</string>
     <string name="status_off_sub">Enable the module in LSPosed, select System UI in its scope, then restart System UI.</string>
@@ -59,7 +61,7 @@
     <string name="card_pill">Pill style</string>
     <string name="card_behavior">Behavior</string>
     <string name="opt_alpha">Opacity</string>
-    <string name="opt_radius">Corner radius</string>
+    <string name="opt_radius">Roundness</string>
     <string name="opt_scale">Size multiplier</string>
     <string name="opt_zone">Active zone (bottom %)</string>
     <string name="opt_haptic">Haptic feedback</string>
