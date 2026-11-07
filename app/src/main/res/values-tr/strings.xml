@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nav_home">Ana sayfa</string>
+    <string name="nav_customize">Özelleştirme</string>
+    <string name="nav_settings">Ayarlar</string>
+
+    <string name="quote">Günde yüzlerce kez geri dönsen bile, kendi kurallarınla ve imzanla yön değiştir.</string>
+
+    <string name="status_on">LSPosed bağlı</string>
+    <string name="status_on_sub">%1$s %2$s · API %3$s</string>
+    <string name="status_off">LSPosed bağlı değil</string>
+    <string name="status_off_sub">Modülü LSPosed\'da etkinleştir, kapsamda Sistem Arayüzü\'nü seç ve Sistem Arayüzü\'nü yeniden başlat.</string>
+
+    <string name="device_title">Cihaz bilgisi</string>
+    <string name="row_device">Cihaz</string>
+    <string name="row_codename">Kod adı</string>
+    <string name="row_android">Android</string>
+    <string name="row_lsposed">LSPosed</string>
+    <string name="row_lsposed_api">LSPosed API</string>
+    <string name="row_zygisk">Zygisk</string>
+    <string name="row_root">Root</string>
+    <string name="tap_to_read">Okumak için dokun (root izni sorar)</string>
+    <string name="reading">Okunuyor…</string>
+    <string name="unknown">Bilinmiyor</string>
+    <string name="no_root">Root erişimi yok</string>
+
+    <string name="whatcan_title">Neler yapabilirsin?</string>
+    <string name="whatcan_summary">Geri hareketini tamamen kendine göre ayarla</string>
+    <string name="whatcan_body">• Geri baloncuğunun rengini, saydamlığını, köşe yuvarlaklığını değiştir veya gradyan ekle\n• Oku kendi ikonunla değiştir, esneme ve boyutu sınırla\n• Hareketi dikey bir bölgeyle sınırla, yan menülerle çakışmasın\n• Titreşimi aç veya kapat\n• Uzun çekme kısayolları: son uygulamaya geç, ekran görüntüsü, zorla kapat</string>
+    <string name="close">Kapat</string>
+
+    <string name="credits_title">Emeği geçenler</string>
+    <string name="credits_body">@cq61tech tarafından geliştirildi. Açık kaynak, libxposed ve LSPosed ile yapıldı.</string>
+    <string name="repo_button">GitHub deposu</string>
+
+    <string name="customize_title">Özelleştirme</string>
+    <string name="preview_title">Önizleme</string>
+    <string name="customize_note">Önizleme ve seçenekler hazır. Sistem geri hareketine uygulanması bir sonraki aşamada geliyor.</string>
+    <string name="opt_alpha">Saydamlık</string>
+    <string name="opt_radius">Köşe yuvarlaklığı</string>
+    <string name="opt_scale">Boyut çarpanı</string>
+    <string name="opt_zone">Aktif bölge (alt %)</string>
+    <string name="opt_haptic">Titreşim</string>
+
+    <string name="settings_title">Ayarlar</string>
+    <string name="search_hint">Ayarlarda ara</string>
+    <string name="no_results">Eşleşen ayar yok</string>
+    <string name="language_title">Dil</string>
+    <string name="language_system">Sistem varsayılanı</string>
+    <string name="theme_title">Görünüm</string>
+    <string name="theme_system">Sistem</string>
+    <string name="theme_light">Açık</string>
+    <string name="theme_dark">Koyu</string>
+    <string name="monet_title">Monet renkleri</string>
+    <string name="monet_summary">Duvar kağıdı renklerini kullan</string>
+    <string name="dock_floating_title">Yüzen dock</string>
+    <string name="dock_floating_summary">Tam genişlik yerine ayrık baloncuk</string>
+    <string name="dock_labels_title">Dock etiketleri</string>
+    <string name="dock_labels_summary">Dock ikonlarının altında etiketleri hep göster</string>
+</resources>

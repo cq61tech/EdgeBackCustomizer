@@ -30,6 +30,7 @@ public class MainModule extends XposedModule {
 
     static final String TAG = "EBC";
     static final String SYSTEMUI = "com.android.systemui";
+    static final String SELF = "com.edgeback.customizer";
     static final File OUT = new File("/data/user/0/com.android.systemui/files/ebc_dump.txt");
     static final int PROBE_LIMIT = 40;
 
@@ -39,14 +40,21 @@ public class MainModule extends XposedModule {
             "com.android.systemui.navigationbar.gestural.BackPanel",
             "com.android.systemui.navigationbar.gestural.NavigationBarEdgePanel",
             "com.android.systemui.statusbar.VibratorHelper",
+            // added in 0.1.0 (second discovery round)
+            "com.android.systemui.navigationbar.gestural.DisplayBackGestureHandlerImpl",
+            "com.android.systemui.navigationbar.gestural.EdgeBackGestureHandler$5",
+            "com.android.systemui.navigationbar.gestural.BackPanel$AnimatedFloat",
+            "com.android.systemui.navigationbar.gestural.BackPanelController$GestureState",
+            "com.android.systemui.navigationbar.gestural.EdgePanelParams$BackIndicatorDimens",
+            "com.android.systemui.plugins.NavigationEdgeBackPlugin$BackCallback",
     };
 
     static final String[] SCAN_NEEDLES = {
-            "EdgeBack", "BackPanel", "EdgePanel", "BackAnimation", "VibratorHelper"
+            "EdgeBack", "BackPanel", "EdgePanel", "BackAnimation", "VibratorHelper", "DisplayBackGesture"
     };
 
     static final String[] PROBE_METHOD_HINTS = {
-            "trigger", "within", "vibrat", "onmotionevent"
+            "trigger", "within", "vibrat", "onmotionevent", "oninputevent", "edgeheight", "cancelgesture", "allowgesture"
     };
 
     static final ConcurrentHashMap<String, AtomicInteger> COUNTERS = new ConcurrentHashMap<>();
@@ -60,6 +68,10 @@ public class MainModule extends XposedModule {
     public void onPackageReady(PackageReadyParam param) {
         try {
             if (!param.isFirstPackage()) return;
+            if (SELF.equals(param.getPackageName())) {
+                markActive(param.getClassLoader());
+                return;
+            }
             if (!SYSTEMUI.equals(param.getPackageName())) return;
             final ClassLoader cl = param.getClassLoader();
 
@@ -90,6 +102,22 @@ public class MainModule extends XposedModule {
             t.start();
         } catch (Throwable t) {
             line("onPackageReady failed: " + Log.getStackTraceString(t));
+        }
+    }
+
+    // ------------------------------------------------------- module status
+
+    /** Tells our own app (running in its own process) that the module is injected. */
+    private void markActive(ClassLoader cl) {
+        try {
+            Class<?> c = Class.forName("com.edgeback.customizer.ModuleStatus", true, cl);
+            c.getField("frameworkName").set(null, String.valueOf(getFrameworkName()));
+            c.getField("frameworkVersion").set(null, String.valueOf(getFrameworkVersion()));
+            c.getField("frameworkVersionCode").set(null, String.valueOf(getFrameworkVersionCode()));
+            c.getField("apiVersion").set(null, String.valueOf(getApiVersion()));
+            c.getField("active").setBoolean(null, true);
+        } catch (Throwable t) {
+            Log.e(TAG, "markActive failed", t);
         }
     }
 
