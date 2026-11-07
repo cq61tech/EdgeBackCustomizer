@@ -21,9 +21,21 @@ jobs:
           gradle-version: '8.14.3'
 
       - name: Build
-        run: gradle :app:assembleDebug --stacktrace
+        shell: bash
+        run: gradle :app:assembleDebug --stacktrace --console=plain 2>&1 | tee build.log
+
+      - name: Error summary
+        if: failure()
+        run: |
+          {
+            echo '### Build errors'
+            echo '```'
+            grep -nE "^e: |error:|What went wrong|Execution failed|Caused by|requires" -A4 build.log | head -80
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@v4
+        if: success()
         with:
           name: EdgeBackCustomizer-debug
           path: app/build/outputs/apk/debug/*.apk
