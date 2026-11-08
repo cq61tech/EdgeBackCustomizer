@@ -19,7 +19,7 @@
     <string name="hooks_not_loaded">Sistem Arayüzü\'nde yüklü değil</string>
     <string name="hooks_discovery">Keşif sürümü (henüz değişiklik yok)</string>
     <string name="status_on_note">Modül yüklendi. Değişiklikler Sistem Arayüzü yeniden başlayınca uygulanır.</string>
-    <string name="status_off_sub">Modülü LSPosed\'da etkinleştir, kapsamda Sistem Arayüzü\'nü seç ve Sistem Arayüzü\'nü yeniden başlat.</string>
+    <string name="status_off_sub">Modülü LSPosed\'da etkinleştir, kapsamda Sistem Arayüzü\'nü ve bu uygulamayı işaretle, sonra Sistem Arayüzü\'nü yeniden başlat. Uygulamayı yeniden kurmak kapsamı sıfırlar.</string>
     <string name="btn_restart_systemui">Sistem Arayüzü\'nü yeniden başlat (root)</string>
     <string name="btn_refresh">Yenile</string>
     <string name="toast_restarting">Sistem Arayüzü yeniden başlatılıyor…</string>

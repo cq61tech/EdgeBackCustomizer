@@ -12,8 +12,19 @@ android {
         applicationId = "com.edgeback.customizer"
         minSdk = 31
         targetSdk = 36
-        versionCode = 3
+        versionCode = 4
         versionName = "0.2.0-ui"
+    }
+
+    // Fixed debug key: every CI build is signed the same way, so new APKs install over old ones.
+    signingConfigs {
+        getByName("debug") {
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "debug"
+            keyPassword = "android"
+            storeType = "pkcs12"
+        }
     }
 
     buildTypes {
