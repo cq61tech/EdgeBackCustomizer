@@ -30,15 +30,15 @@ fun setLauncherIconHidden(ctx: Context, hidden: Boolean) {
 object RootInfo {
     /** Blocking. Reads the status file the module writes inside System UI. Needs root. */
     fun readHostStatus(): HostStatus? = try {
-        val p = ProcessBuilder("su", "-c", "cat /data/user/0/com.android.systemui/files/ebc_status.txt")
+        val p = ProcessBuilder("su", "-c", "head -n 25 /data/user/0/com.android.systemui/files/ebc_dump.txt")
             .redirectErrorStream(true).start()
         val out = p.inputStream.bufferedReader().readText()
         if (!p.waitFor(8, TimeUnit.SECONDS)) {
             p.destroy()
             null
         } else {
-            val m = out.lines().filter { it.contains('=') }
-                .associate { it.substringBefore('=') to it.substringAfter('=').trim() }
+            val m = out.lines().filter { it.startsWith("status.") && it.contains('=') }
+                .associate { it.substringBefore('=').removePrefix("status.") to it.substringAfter('=').trim() }
             if (!m.containsKey("framework")) {
                 null
             } else {

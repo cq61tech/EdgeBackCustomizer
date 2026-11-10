@@ -76,7 +76,6 @@ public class MainModule extends XposedModule {
             if (!SYSTEMUI.equals(param.getPackageName())) return;
             final ClassLoader cl = param.getClassLoader();
 
-            writeStatus();
             try {
                 OUT.delete();
             } catch (Throwable ignored) {
@@ -86,6 +85,14 @@ public class MainModule extends XposedModule {
                     + " codename=" + Build.VERSION.CODENAME);
             line("fingerprint=" + Build.FINGERPRINT);
             line("model=" + Build.MANUFACTURER + " " + Build.MODEL);
+            // lines below are read by the companion app through root ("status." prefix)
+            line("status.framework=" + safe(() -> String.valueOf(getFrameworkName())));
+            line("status.version=" + safe(() -> String.valueOf(getFrameworkVersion())));
+            line("status.versionCode=" + safe(() -> String.valueOf(getFrameworkVersionCode())));
+            line("status.api=" + safe(() -> String.valueOf(getApiVersion())));
+            line("status.time=" + System.currentTimeMillis());
+            String statusErr = writeStatus();
+            line("status.file=" + (statusErr == null ? "ok" : statusErr));
 
             // Known candidates: dump + probe synchronously.
             for (String name : KNOWN) {
@@ -141,11 +148,8 @@ public class MainModule extends XposedModule {
         }
     }
 
-    /**
-     * Written when the module loads inside System UI. The app reads it through root,
-     * which proves the hooks really reach System UI in this boot.
-     */
-    private void writeStatus() {
+    /** Best-effort copy of the status as its own file. Returns null on success, else the error. */
+    private String writeStatus() {
         try {
             File f = new File("/data/user/0/com.android.systemui/files/ebc_status.txt");
             File dir = f.getParentFile();
@@ -161,8 +165,9 @@ public class MainModule extends XposedModule {
             try (FileWriter w = new FileWriter(f, false)) {
                 w.write(sb.toString());
             }
+            return null;
         } catch (Throwable t) {
-            Log.w(TAG, "writeStatus failed", t);
+            return String.valueOf(t);
         }
     }
 
