@@ -24,6 +24,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -57,6 +61,13 @@ private fun App(prefs: Prefs) {
         }
     }
     LaunchedEffect(tab) { hidden.value = false }
+
+    // keep System UI in sync with the settings (debounced while a slider is dragged)
+    val ctx = LocalContext.current
+    LaunchedEffect(prefs.enableHooks.value, prefs.haptic.value, prefs.zonePercent.value) {
+        delay(300)
+        withContext(Dispatchers.IO) { ConfigSync.push(ctx, prefs) }
+    }
 
     Surface(
         modifier = Modifier.fillMaxSize(),

@@ -55,7 +55,7 @@ public class MainModule extends XposedModule {
     };
 
     static final String[] PROBE_METHOD_HINTS = {
-            "trigger", "within", "vibrat", "onmotionevent", "oninputevent", "edgeheight", "cancelgesture", "allowgesture"
+            "trigger", "within", "vibrat", "onmotionevent", "edgeheight", "cancelgesture", "allowgesture"
     };
 
     static final ConcurrentHashMap<String, AtomicInteger> COUNTERS = new ConcurrentHashMap<>();
@@ -104,6 +104,8 @@ public class MainModule extends XposedModule {
                 dumpClass(c);
                 probeClass(c);
             }
+
+            installCore(cl);
 
             // Scan the dex in the background (no hooks there).
             Thread t = new Thread(() -> scanAndDump(cl), "EBC-scan");
@@ -168,6 +170,39 @@ public class MainModule extends XposedModule {
             return null;
         } catch (Throwable t) {
             return String.valueOf(t);
+        }
+    }
+
+    // ------------------------------------------------------------ phase 1
+
+    /** Hooks the edge-gesture input entry point: vertical zone + haptics (see Core). */
+    private void installCore(ClassLoader cl) {
+        Class<?> h = load(cl, KNOWN[0]);
+        if (h == null) {
+            line("core: EdgeBackGestureHandler missing");
+            return;
+        }
+        Method target = null;
+        for (Method x : h.getDeclaredMethods()) {
+            if (x.getName().equals("onInputEvent") && x.getParameterTypes().length == 1) target = x;
+        }
+        if (target == null) {
+            line("core: onInputEvent missing");
+            return;
+        }
+        try {
+            hook((Executable) target).intercept(chain -> {
+                boolean drop = false;
+                try {
+                    drop = Core.beforeInput(chain.getThisObject(), chain.getArg(0));
+                } catch (Throwable ignored) {
+                }
+                if (drop) return null;
+                return chain.proceed();
+            });
+            line("core: onInputEvent hook installed");
+        } catch (Throwable t) {
+            line("core: hook failed " + t);
         }
     }
 
@@ -333,7 +368,7 @@ public class MainModule extends XposedModule {
         }
     }
 
-    private static void line(String s) {
+    static void line(String s) {
         Log.i(TAG, s);
         append(s + "\n");
     }

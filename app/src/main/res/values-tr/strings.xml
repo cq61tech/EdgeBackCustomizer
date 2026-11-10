@@ -15,7 +15,7 @@
     <string name="row_hooks">Geri hareketi hook\'ları</string>
     <string name="status_active">Etkin (%1$s %2$s · API %3$s)</string>
     <string name="status_inactive">Bağlı değil</string>
-    <string name="hooks_loaded">Sistem Arayüzü\'nde yüklü (keşif sürümü)</string>
+    <string name="hooks_loaded">Sistem Arayüzü\'nde yüklü (titreşim + bölge)</string>
     <string name="hooks_not_loaded">Sistem Arayüzü\'nde yüklü değil</string>
     <string name="hooks_discovery">Keşif sürümü (henüz değişiklik yok)</string>
     <string name="status_on_note">Modül yüklendi. Değişiklikler Sistem Arayüzü yeniden başlayınca uygulanır.</string>
@@ -56,7 +56,7 @@
     <string name="preview_title">Canlı önizleme</string>
     <string name="preview_caption">Yaklaşık önizleme. Gerçek baloncuğu Sistem Arayüzü çizer.</string>
     <string name="preview_tip">İpucu: tam değer yazmak için değere dokun</string>
-    <string name="customize_note">Önizleme ve seçenekler hazır. Sistem geri hareketine uygulanması bir sonraki aşamada geliyor.</string>
+    <string name="customize_note">Aktif bölge ve titreşim gerçek harekete şimdiden uygulanıyor. Görünüm seçenekleri bir sonraki aşamada.</string>
     <string name="card_pill">Baloncuk stili</string>
     <string name="card_behavior">Davranış</string>
     <string name="opt_alpha">Saydamlık</string>

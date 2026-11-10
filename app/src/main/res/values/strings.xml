@@ -16,7 +16,7 @@
     <string name="row_hooks">Back gesture hooks</string>
     <string name="status_active">Active (%1$s %2$s · API %3$s)</string>
     <string name="status_inactive">Not connected</string>
-    <string name="hooks_loaded">Loaded in System UI (discovery build)</string>
+    <string name="hooks_loaded">Loaded in System UI (haptics + zone)</string>
     <string name="hooks_not_loaded">Not loaded in System UI</string>
     <string name="hooks_discovery">Discovery build (no changes yet)</string>
     <string name="status_on_note">The module is injected. Changes apply after System UI restarts.</string>
@@ -57,7 +57,7 @@
     <string name="preview_title">Live preview</string>
     <string name="preview_caption">Approximate preview. The real pill is drawn by System UI.</string>
     <string name="preview_tip">Tip: tap a value to type it exactly</string>
-    <string name="customize_note">The preview and options are ready. Applying them to the system gesture comes in the next phase.</string>
+    <string name="customize_note">Active zone and haptic feedback already apply to the real gesture. The look options come in the next phase.</string>
     <string name="card_pill">Pill style</string>
     <string name="card_behavior">Behavior</string>
     <string name="opt_alpha">Opacity</string>
