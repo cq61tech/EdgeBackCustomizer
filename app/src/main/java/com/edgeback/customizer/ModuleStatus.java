@@ -1,9 +1,5 @@
 package com.edgeback.customizer;
 
-/**
- * Filled in by the Xposed module (MainModule) when it is loaded into this very app.
- * If {@link #active} is still false, the module is not injected.
- */
 public final class ModuleStatus {
     private ModuleStatus() {}
 

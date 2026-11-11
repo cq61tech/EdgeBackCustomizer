@@ -16,9 +16,9 @@
     <string name="row_hooks">Back gesture hooks</string>
     <string name="status_active">Active (%1$s %2$s · API %3$s)</string>
     <string name="status_inactive">Not connected</string>
-    <string name="hooks_loaded">Loaded in System UI (zone, haptics, look)</string>
+    <string name="hooks_loaded">Loaded in System UI</string>
     <string name="hooks_not_loaded">Not loaded in System UI</string>
-    <string name="hooks_discovery">Discovery build (no changes yet)</string>
+    <string name="hooks_active">Active</string>
     <string name="status_on_note">The module is injected. Changes apply after System UI restarts.</string>
     <string name="status_off_sub">Enable the module in LSPosed, tick System UI and this app in its scope, then restart System UI. Reinstalling the app resets the scope.</string>
     <string name="btn_restart_systemui">Restart System UI (root)</string>

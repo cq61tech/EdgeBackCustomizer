@@ -86,7 +86,6 @@ class StringPref(
     override fun read(o: JSONObject) { if (o.has(key)) value = o.getString(key) }
 }
 
-/** All app-side settings. Phase 1 will mirror the pill/zone/haptic/hook values to the module. */
 class Prefs(ctx: Context) {
     private val sp = ctx.getSharedPreferences("ebc_prefs", Context.MODE_PRIVATE)
     private val backedUp = mutableListOf<BasePref>()
@@ -96,32 +95,28 @@ class Prefs(ctx: Context) {
         return p
     }
 
-    // appearance
-    val themeMode = reg(IntPref(sp, "theme_mode", 0)) // 0 system, 1 light, 2 dark
+    val themeMode = reg(IntPref(sp, "theme_mode", 0))
     val monet = reg(BoolPref(sp, "monet", true))
     val accentHue = reg(FloatPref(sp, "accent_hue", 246f))
     val amoled = reg(BoolPref(sp, "amoled", false))
 
-    // bottom bar
     val dockFloating = reg(BoolPref(sp, "dock_floating", true))
-    val dockWidth = reg(FloatPref(sp, "dock_width", 50f))       // % of screen width
-    val dockHeight = reg(FloatPref(sp, "dock_height", 61f))     // dp
-    val dockOpacity = reg(FloatPref(sp, "dock_opacity", 100f))  // %
-    val dockTextSize = reg(FloatPref(sp, "dock_text", 9f))      // sp
-    val dockBottom = reg(FloatPref(sp, "dock_bottom", 5f))      // dp
+    val dockWidth = reg(FloatPref(sp, "dock_width", 50f))
+    val dockHeight = reg(FloatPref(sp, "dock_height", 61f))
+    val dockOpacity = reg(FloatPref(sp, "dock_opacity", 100f))
+    val dockTextSize = reg(FloatPref(sp, "dock_text", 9f))
+    val dockBottom = reg(FloatPref(sp, "dock_bottom", 5f))
     val dockHide = reg(BoolPref(sp, "dock_hide", true))
     val dockLabels = reg(BoolPref(sp, "dock_labels", false))
 
-    // customization (not yet applied to the system gesture)
     val pillLook = reg(BoolPref(sp, "pill_look", false))
     val pillGradient = reg(BoolPref(sp, "pill_gradient", false))
-    val pillAlpha = reg(FloatPref(sp, "pill_alpha", 100f))      // %
-    val pillRound = reg(FloatPref(sp, "pill_round", 100f))      // % (100 = full circle)
+    val pillAlpha = reg(FloatPref(sp, "pill_alpha", 100f))
+    val pillRound = reg(FloatPref(sp, "pill_round", 100f))
     val pillScale = reg(FloatPref(sp, "pill_scale", 1f))
     val zonePercent = reg(FloatPref(sp, "zone_percent", 100f))
     val haptic = reg(BoolPref(sp, "haptic", true))
 
-    // pill: custom colors (HSL), gradient angle, shape
     val pillColorCustom = reg(BoolPref(sp, "pill_color_custom", false))
     val bgH = reg(FloatPref(sp, "bg_h", 246f))
     val bgS = reg(FloatPref(sp, "bg_s", 78f))
@@ -133,31 +128,27 @@ class Prefs(ctx: Context) {
     val g2S = reg(FloatPref(sp, "g2_s", 70f))
     val g2L = reg(FloatPref(sp, "g2_l", 70f))
     val gradAngle = reg(FloatPref(sp, "grad_angle", 90f))
-    val pillW = reg(FloatPref(sp, "pill_w", 100f))               // % width multiplier
-    val pillH = reg(FloatPref(sp, "pill_h", 100f))               // % height multiplier
-    val arrowSize = reg(FloatPref(sp, "arrow_size", 100f))       // %
-    val arrowStroke = reg(FloatPref(sp, "arrow_stroke", 0f))     // dp, 0 = stock
-    val glow = reg(FloatPref(sp, "glow", 0f))                    // dp
-    val offsetY = reg(FloatPref(sp, "offset_y", 0f))             // dp
+    val pillW = reg(FloatPref(sp, "pill_w", 100f))
+    val pillH = reg(FloatPref(sp, "pill_h", 100f))
+    val arrowSize = reg(FloatPref(sp, "arrow_size", 100f))
+    val arrowStroke = reg(FloatPref(sp, "arrow_stroke", 0f))
+    val glow = reg(FloatPref(sp, "glow", 0f))
+    val offsetY = reg(FloatPref(sp, "offset_y", 0f))
 
-    // edges
     val edgeLeft = reg(BoolPref(sp, "edge_left", true))
     val edgeRight = reg(BoolPref(sp, "edge_right", true))
-    val edgeWidth = reg(FloatPref(sp, "edge_width", 100f))       // % of the stock trigger width
+    val edgeWidth = reg(FloatPref(sp, "edge_width", 100f))
 
-    // font
     val fontId = reg(StringPref(sp, "font_id", "auto"))
     val fontWeight = reg(FloatPref(sp, "font_weight", 600f))
     val fontRound = reg(FloatPref(sp, "font_round", 100f))
     val fontScale = reg(FloatPref(sp, "font_scale", 100f))
-    val fontSpacing = reg(FloatPref(sp, "font_spacing", 0f))     // thousandths of an em
+    val fontSpacing = reg(FloatPref(sp, "font_spacing", 0f))
 
-    // module
     val enableHooks = reg(BoolPref(sp, "enable_hooks", true))
     val debugLog = reg(BoolPref(sp, "debug_log", false))
     val hideIcon = reg(BoolPref(sp, "hide_icon", false))
 
-    // cached root info (not part of backups)
     val rootChecked = BoolPref(sp, "root_checked", false)
     val rootSolution = StringPref(sp, "root_solution", "")
     val zygisk = StringPref(sp, "zygisk", "")

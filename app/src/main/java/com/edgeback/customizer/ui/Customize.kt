@@ -60,7 +60,6 @@ fun CustomizeScreen(prefs: Prefs) {
             modifier = Modifier.padding(horizontal = 4.dp),
         )
 
-        // ---- look: switches, colors, gradient
         SectionCard(stringResource(R.string.card_pill)) {
             SwitchRow(
                 stringResource(R.string.look_title),
@@ -97,7 +96,6 @@ fun CustomizeScreen(prefs: Prefs) {
             }
         }
 
-        // ---- size and shape
         SectionCard(stringResource(R.string.card_size)) {
             SliderRow(stringResource(R.string.opt_scale), prefs.pillScale.value, 0.4f..2.5f, "x", decimals = 2) {
                 prefs.pillScale.value = it
@@ -122,7 +120,6 @@ fun CustomizeScreen(prefs: Prefs) {
             }
         }
 
-        // ---- behavior
         SectionCard(stringResource(R.string.card_behavior)) {
             SliderRow(stringResource(R.string.opt_zone), prefs.zonePercent.value, 20f..100f, "%") {
                 prefs.zonePercent.value = it
@@ -172,7 +169,6 @@ private fun PreviewCard(prefs: Prefs) {
     ) {
         Canvas(Modifier.fillMaxSize()) {
             val d = this.density
-            // active zone strip on the left edge (bottom N% of the height)
             if (prefs.edgeLeft.value) {
                 val zoneH = size.height * (prefs.zonePercent.value / 100f)
                 drawRoundRect(
@@ -182,7 +178,6 @@ private fun PreviewCard(prefs: Prefs) {
                     cornerRadius = CornerRadius(3f * d, 3f * d),
                 )
             }
-            // back ball: centered, round by default
             val sc = prefs.pillScale.value
             val bw = 76f * d * sc * prefs.pillW.value / 100f
             val bh = 76f * d * sc * prefs.pillH.value / 100f

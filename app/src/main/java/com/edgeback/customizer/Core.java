@@ -5,6 +5,7 @@ import android.graphics.Canvas;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.Point;
+import android.graphics.RectF;
 import android.graphics.Shader;
 import android.os.SystemClock;
 import android.provider.Settings;
@@ -18,13 +19,6 @@ import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * Logic that runs inside System UI.
- *  - input: active zone, left/right edge switches, edge width, haptics
- *  - draw : colors, gradient (+angle), opacity, size (uniform/width/height), roundness,
- *           arrow size and thickness, glow and vertical offset of the back pill
- * Settings come from Settings.Global "ebc_cfg", written by the app (see ConfigSync).
- */
 final class Core {
     private Core() {}
 
@@ -53,31 +47,31 @@ final class Core {
     private static volatile int edgeW = 100;
     private static volatile long lastRead = 0;
     private static boolean dropping = false;
+    private static boolean pluginDropping = false;
+    private static volatile boolean gestureActive = false;
+    private static volatile long gestureEnd = 0;
+    private static volatile Boolean stockHaptic = null;
+    private static final Paint GLOW = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private static final RectF RECT = new RectF();
 
-    // edge width bookkeeping: stock values and what we last wrote
     private static int origL = -1, origR = -1, setL = -1, setR = -1;
 
     private static final ConcurrentHashMap<String, Field> FIELDS = new ConcurrentHashMap<>();
     private static final AtomicInteger DBG = new AtomicInteger();
     private static final AtomicInteger DBG_DRAW = new AtomicInteger();
-    /** per panel view: [stock bg color, stock arrow color, applied(0/1)] */
+    private static final AtomicInteger DBG_PLUGIN = new AtomicInteger();
     private static final Map<Object, int[]> ORIG = Collections.synchronizedMap(new WeakHashMap<>());
-    /** per panel view: [stock arrow stroke width] */
     private static final Map<Object, float[]> ORIG_F = Collections.synchronizedMap(new WeakHashMap<>());
 
-    // ------------------------------------------------------------------ input
-
-    /** Returns true when this input event must be swallowed. */
     static boolean beforeInput(Object handler, Object event) {
         Object ctxObj = get(handler, "mContext");
         refresh(ctxObj instanceof Context ? (Context) ctxObj : null);
 
-        // haptics: follow the system value unless we are told to silence it
         Object plugin = get(handler, "mEdgeBackPlugin");
         if (plugin != null) {
-            boolean system = Boolean.TRUE.equals(get(handler, "mIsEdgeHapticEnabled"));
-            boolean want = (hooks == 1 && haptic == 0) ? false : system;
-            set(plugin, "edgeHapticEnabled", want);
+            Object system = get(handler, "mIsEdgeHapticEnabled");
+            if (system instanceof Boolean) stockHaptic = (Boolean) system;
+            applyHaptic(plugin);
         }
 
         applyEdgeWidth(handler);
@@ -87,36 +81,91 @@ final class Core {
         int action = m.getActionMasked();
 
         if (action == MotionEvent.ACTION_DOWN) {
-            dropping = false;
-            if (hooks == 1) {
-                Object size = get(handler, "mDisplaySize");
-                if (size instanceof Point && ((Point) size).y > 0 && ((Point) size).x > 0) {
-                    Point sz = (Point) size;
-                    if (zone < 100) {
-                        dropping = m.getRawY() < sz.y * (1f - zone / 100f);
-                    }
-                    boolean left = m.getRawX() < sz.x / 2f;
-                    if ((left && leftOn == 0) || (!left && rightOn == 0)) dropping = true;
-                }
-            }
-            if (DBG.getAndIncrement() < 20) {
+            dropping = shouldDrop(get(handler, "mDisplaySize"), m);
+            markGesture(true);
+            if (DBG.getAndIncrement() < 12) {
                 MainModule.line("input DOWN x=" + m.getRawX() + " y=" + m.getRawY() + " zone=" + zone
                         + " left=" + leftOn + " right=" + rightOn + " edgeW=" + edgeW + " drop=" + dropping);
             }
         }
         boolean drop = dropping;
-        if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) dropping = false;
+        if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+            dropping = false;
+            markGesture(false);
+        }
         return drop;
     }
 
-    /** Scales the width of the edge strip that starts a back gesture. */
+    static boolean pluginGate(Object controller, Object event) {
+        Object view = get(controller, "mView");
+        if (view instanceof View) refresh(((View) view).getContext());
+        applyHaptic(controller);
+
+        if (!(event instanceof MotionEvent)) return false;
+        MotionEvent m = (MotionEvent) event;
+        int action = m.getActionMasked();
+        if (action == MotionEvent.ACTION_DOWN) {
+            pluginDropping = shouldDrop(get(controller, "displaySize"), m);
+            markGesture(true);
+            if (DBG_PLUGIN.getAndIncrement() < 12) {
+                MainModule.line("plugin DOWN x=" + m.getRawX() + " y=" + m.getRawY() + " drop=" + pluginDropping);
+            }
+        }
+        boolean drop = pluginDropping;
+        if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+            pluginDropping = false;
+            markGesture(false);
+        }
+        return drop;
+    }
+
+    private static boolean shouldDrop(Object size, MotionEvent m) {
+        if (hooks != 1 || !(size instanceof Point)) return false;
+        Point sz = (Point) size;
+        if (sz.x <= 0 || sz.y <= 0) return false;
+        boolean outside = zone < 100 && m.getRawY() < sz.y * (1f - zone / 100f);
+        boolean left = m.getRawX() < sz.x / 2f;
+        boolean disabled = (left && leftOn == 0) || (!left && rightOn == 0);
+        return outside || disabled;
+    }
+
+    private static void markGesture(boolean down) {
+        gestureActive = down;
+        gestureEnd = SystemClock.uptimeMillis() + 700;
+    }
+
+    static void rememberHaptic(Object enabled) {
+        if (enabled instanceof Boolean) stockHaptic = (Boolean) enabled;
+    }
+
+    static void applyHaptic(Object controller) {
+        if (controller == null) return;
+        if (hooks == 1 && haptic == 0) {
+            set(controller, "edgeHapticEnabled", Boolean.FALSE);
+        } else if (stockHaptic != null) {
+            set(controller, "edgeHapticEnabled", stockHaptic);
+        }
+    }
+
+    private static boolean silenced() {
+        return hooks == 1 && haptic == 0;
+    }
+
+    static boolean muteVibration() {
+        return silenced() && (gestureActive || SystemClock.uptimeMillis() < gestureEnd);
+    }
+
+    static boolean muteViewHaptic(Object view) {
+        return silenced() && view != null && view.getClass().getName().endsWith(".BackPanel");
+    }
+
     private static void applyEdgeWidth(Object handler) {
         Object l = get(handler, "mEdgeWidthLeft");
         Object r = get(handler, "mEdgeWidthRight");
         if (!(l instanceof Integer) || !(r instanceof Integer)) return;
         int curL = (Integer) l;
         int curR = (Integer) r;
-        if (curL != setL) origL = curL; // the system changed it (or first time): new stock value
+        if (curL != setL) origL = curL;
         if (curR != setR) origR = curR;
         float f = (hooks == 1) ? edgeW / 100f : 1f;
         int nl = Math.max(1, Math.round(origL * f));
@@ -127,15 +176,12 @@ final class Core {
         if (nr != curR) set(handler, "mEdgeWidthRight", Integer.valueOf(nr));
     }
 
-    // ------------------------------------------------------------------- draw
-
     static final class DrawState {
         int saveCount = -1;
         Object edge, far, arrowLen, arrowHei;
         float edgeOrig, farOrig, lenOrig, heiOrig;
     }
 
-    /** Called right before BackPanel.onDraw. Returns state to undo after the draw. */
     static DrawState beforeDraw(Object view, Canvas canvas) {
         if (!(view instanceof View)) return null;
         View v = (View) view;
@@ -158,14 +204,14 @@ final class Core {
         boolean active = hooks == 1 && look == 1;
 
         if (!active) {
-            if (orig[2] == 1) { // put the stock look back
+            if (orig[2] == 1) {
                 bgPaint.setColor(orig[0]);
                 fgPaint.setColor(orig[1]);
                 fgPaint.setStrokeWidth(origF[0]);
                 bgPaint.setShader(null);
                 bgPaint.clearShadowLayer();
                 orig[2] = 0;
-            } else { // keep tracking the stock values (they change with the theme)
+            } else {
                 orig[0] = bgPaint.getColor();
                 orig[1] = fgPaint.getColor();
                 origF[0] = fgPaint.getStrokeWidth();
@@ -173,7 +219,7 @@ final class Core {
             return null;
         }
 
-        if (orig[2] == 0) { // first custom draw: remember what stock looked like
+        if (orig[2] == 0) {
             orig[0] = bgPaint.getColor();
             orig[1] = fgPaint.getColor();
             origF[0] = fgPaint.getStrokeWidth();
@@ -184,11 +230,7 @@ final class Core {
         bgPaint.setColor(bg);
         fgPaint.setColor(fg);
         fgPaint.setStrokeWidth(stroke10 > 0 ? stroke10 / 10f * density : origF[0]);
-        if (glow > 0) {
-            bgPaint.setShadowLayer(glow * density, 0f, 0f, bg);
-        } else {
-            bgPaint.clearShadowLayer();
-        }
+        bgPaint.clearShadowLayer();
 
         Object bw = get(view, "backgroundWidth");
         Object bh = get(view, "backgroundHeight");
@@ -221,6 +263,8 @@ final class Core {
             canvas.scale(sx, sy, left ? 0f : w, h * 0.5f);
         }
 
+        if (glow > 0 && bwv > 0f && bhv > 0f) drawGlow(view, canvas, v, bwv, bhv, density);
+
         st.edge = get(view, "backgroundEdgeCornerRadius");
         st.far = get(view, "backgroundFarCornerRadius");
         st.edgeOrig = getFloat(st.edge, "pos", 0f);
@@ -248,6 +292,32 @@ final class Core {
         return st;
     }
 
+    private static void drawGlow(Object view, Canvas canvas, View v, float bw, float bh, float density) {
+        boolean left = Boolean.TRUE.equals(get(view, "isLeftPanel"));
+        float ht = getFloat(get(view, "horizontalTranslation"), "pos", 0f);
+        float vt = getFloat(get(view, "verticalTranslation"), "pos", 0f);
+        float sc = getFloat(get(view, "scale"), "pos", 1f);
+        float px = getFloat(get(view, "scalePivotX"), "pos", 0f);
+        float fade = Math.min(getFloat(get(view, "backgroundAlpha"), "pos", 1f),
+                getFloat(get(view, "arrowAlpha"), "pos", 1f));
+        float corner = Math.min(bw, bh) / 2f * (round / 100f);
+        int steps = 7;
+        float reach = glow * density;
+
+        canvas.save();
+        if (!left) canvas.scale(-1f, 1f, v.getWidth() / 2f, 0f);
+        canvas.translate(ht, v.getHeight() * 0.5f + vt);
+        canvas.scale(sc, sc, px, 0f);
+        for (int i = steps; i >= 1; i--) {
+            float grow = reach * i / steps;
+            GLOW.setColor(bg);
+            GLOW.setAlpha(Math.round(255f * fade * 0.10f));
+            RECT.set(-grow, -bh / 2f - grow, bw + grow, bh / 2f + grow);
+            canvas.drawRoundRect(RECT, corner + grow, corner + grow, GLOW);
+        }
+        canvas.restore();
+    }
+
     static void afterDraw(Canvas canvas, DrawState st) {
         if (st == null) return;
         if (st.saveCount >= 0) canvas.restoreToCount(st.saveCount);
@@ -258,8 +328,6 @@ final class Core {
             setFloat(st.arrowHei, "pos", st.heiOrig);
         }
     }
-
-    // ----------------------------------------------------------------- config
 
     private static void refresh(Context ctx) {
         long now = SystemClock.uptimeMillis();
@@ -306,8 +374,6 @@ final class Core {
             return def;
         }
     }
-
-    // ------------------------------------------------------------- reflection
 
     private static Object get(Object o, String name) {
         if (o == null) return null;

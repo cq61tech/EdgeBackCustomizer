@@ -266,7 +266,7 @@ fun SettingsScreen(prefs: Prefs) {
                 )
                 InfoRow(
                     stringResource(R.string.diag_module),
-                    if (ModuleStatus.active) stringResource(R.string.hooks_discovery) else stringResource(R.string.status_inactive),
+                    if (ModuleStatus.active) stringResource(R.string.hooks_active) else stringResource(R.string.status_inactive),
                 )
             }
         },

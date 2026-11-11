@@ -1,20 +1,38 @@
 # EdgeBackCustomizer
 
-LSPosed (libxposed API 102) module that customizes the edge back gesture in
-AOSP / Pixel SystemUI (Android 12-17).
+LSPosed module for customizing the edge back gesture on AOSP / Pixel System UI (Android 12 and up).
+Built on the libxposed API (102). Needs LSPosed (or Vector) with Zygisk, and root for the
+status and restart helpers.
 
-* App UI: Jetpack Compose + Material 3 (Monet), 3 pages: Home, Customize, Settings. Turkish and English.
-* Module: still in discovery. It changes no behaviour yet; it dumps the back-gesture
-  classes to `/data/user/0/com.android.systemui/files/ebc_dump.txt` (logcat tag `EBC`).
+## Features
 
-Build: push to `main`, GitHub Actions produces the debug APK artifact.
+- Back pill look: colors (theme or custom HSL), gradient and angle, opacity, glow, roundness,
+  size (uniform, width, height), arrow size and thickness, vertical offset
+- Active zone (bottom percentage), left/right edge switches, edge trigger width
+- Haptic feedback on/off
+- App UI: Material 3 with Monet, accent color, AMOLED mode, floating dock, English and Turkish,
+  custom fonts, settings backup and restore
 
-Note: `app/src/main/res/drawable-nodpi/header_sky.jpg` is a placeholder header image.
-Replace it with an image you have the rights to before publishing.
+## Setup
+
+1. Install the APK and enable the module in LSPosed.
+2. In the module's scope tick **System UI** and **EdgeBackCustomizer**.
+3. Restart System UI (button in the app) or reboot.
+
+Reinstalling the app with a different signature clears the scope; builds from this repo use a fixed
+debug key so updates install over each other.
+
+## Build
+
+Push to `main` and GitHub Actions produces the debug APK. Locally: `gradle :app:assembleDebug`
+(JDK 17).
 
 ## Fonts
 
-The app UI can use rounded variable fonts (Nunito, Quicksand, Fredoka, Outfit, Manrope, Baloo 2,
-Comfortaa, DM Sans). They are SIL Open Font License 1.1 fonts from https://github.com/google/fonts and
-are downloaded by the GitHub Actions workflow into `app/src/main/assets/fonts/` (not committed).
-You can also import your own .ttf/.otf from Settings -> Font.
+The UI can use rounded variable fonts (Nunito, Quicksand, Fredoka, Outfit, Manrope, Baloo 2,
+Comfortaa, DM Sans). They are licensed under the SIL Open Font License 1.1 and are fetched from
+https://github.com/google/fonts by the workflow into `app/src/main/assets/fonts/` (not committed).
+Your own .ttf/.otf can be imported from Settings -> Font.
+
+The header image in `res/drawable-nodpi/header_sky.jpg` is a placeholder; replace it with one you
+have the rights to.

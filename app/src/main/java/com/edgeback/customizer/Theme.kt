@@ -19,7 +19,6 @@ import androidx.compose.ui.unit.dp
 
 class StatusColors(val container: Color, val onContainer: Color)
 
-/** A green container whose hue is pulled slightly toward the primary, so it sits well in the palette. */
 fun greenFor(primary: Color, dark: Boolean): StatusColors {
     val hsv = FloatArray(3)
     android.graphics.Color.colorToHSV(primary.toArgb(), hsv)
@@ -36,13 +35,11 @@ fun greenFor(primary: Color, dark: Boolean): StatusColors {
 private fun hsl(h: Float, s: Float, l: Float): Color =
     Color.hsl(((h % 360f) + 360f) % 360f, s, l)
 
-/** Hue in degrees, saturation and lightness in percent. */
 fun hslColor(h: Float, s: Float, l: Float): Color =
     Color.hsl(((h % 360f) + 360f) % 360f, (s / 100f).coerceIn(0f, 1f), (l / 100f).coerceIn(0f, 1f))
 
-/** Builds a full palette from a single hue (used when Monet is off). */
 private fun accentScheme(hue: Float, dark: Boolean, amoled: Boolean): ColorScheme {
-    val sh = hue + 20f // surfaces lean slightly warmer than the accent
+    val sh = hue + 20f
     val sec = hue + 15f
     val ter = hue + 60f
     return if (dark) {

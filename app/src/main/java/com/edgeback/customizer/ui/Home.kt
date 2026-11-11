@@ -74,7 +74,6 @@ fun HomeScreen(prefs: Prefs) {
     val scope = rememberCoroutineScope()
     val restart = rememberRestartSystemUi()
 
-    // Asks for root (first time) and reads root info + whether the module is loaded in System UI.
     val refresh: () -> Unit = {
         if (!reading) {
             reading = true
@@ -90,7 +89,6 @@ fun HomeScreen(prefs: Prefs) {
         }
     }
 
-    // If root was already granted before, check silently on open.
     LaunchedEffect(Unit) {
         if (prefs.rootChecked.value && prefs.rootSolution.value.isNotBlank()) {
             host = withContext(Dispatchers.IO) { RootInfo.readHostStatus() }
@@ -162,7 +160,7 @@ private fun StatusCard(tick: Int, host: HostStatus?, onRestart: () -> Unit, onRe
     val cs = MaterialTheme.colorScheme
     val dark = cs.background.luminance() < 0.5f
     val hostLoaded = host != null && host.loadedThisBoot
-    val self = ModuleStatus.active // set when the module is injected into this app
+    val self = ModuleStatus.active
     val on = self || hostLoaded
     val green = greenFor(cs.primary, dark)
     val container = if (on) green.container else cs.errorContainer
@@ -179,7 +177,7 @@ private fun StatusCard(tick: Int, host: HostStatus?, onRestart: () -> Unit, onRe
     }
     val hooksValue = when {
         hostLoaded -> stringResource(R.string.hooks_loaded)
-        self -> stringResource(R.string.hooks_discovery)
+        self -> stringResource(R.string.hooks_active)
         else -> stringResource(R.string.hooks_not_loaded)
     }
 

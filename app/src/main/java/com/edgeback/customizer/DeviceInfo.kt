@@ -8,7 +8,6 @@ import java.util.concurrent.TimeUnit
 
 class RootResult(val solution: String, val zygisk: String)
 
-/** What the module wrote from inside System UI (see MainModule.writeStatus). */
 class HostStatus(
     val name: String,
     val version: String,
@@ -17,7 +16,6 @@ class HostStatus(
     val loadedThisBoot: Boolean,
 )
 
-/** Shows or hides the launcher icon (the alias declared in the manifest). */
 fun setLauncherIconHidden(ctx: Context, hidden: Boolean) {
     ctx.packageManager.setComponentEnabledSetting(
         ComponentName(ctx.packageName, "com.edgeback.customizer.LauncherAlias"),
@@ -28,9 +26,8 @@ fun setLauncherIconHidden(ctx: Context, hidden: Boolean) {
 }
 
 object RootInfo {
-    /** Blocking. Reads the status file the module writes inside System UI. Needs root. */
     fun readHostStatus(): HostStatus? = try {
-        val p = ProcessBuilder("su", "-c", "head -n 25 /data/user/0/com.android.systemui/files/ebc_dump.txt")
+        val p = ProcessBuilder("su", "-c", "head -n 25 /data/user/0/com.android.systemui/files/ebc.log")
             .redirectErrorStream(true).start()
         val out = p.inputStream.bufferedReader().readText()
         if (!p.waitFor(8, TimeUnit.SECONDS)) {
@@ -57,7 +54,6 @@ object RootInfo {
         null
     }
 
-    /** Blocking. Runs one command as root; true when it exited with 0. */
     fun exec(cmd: String): Boolean = try {
         val p = ProcessBuilder("su", "-c", cmd).redirectErrorStream(true).start()
         p.inputStream.bufferedReader().readText()
@@ -79,7 +75,6 @@ echo "MZ:${'$'}(magisk --sqlite "select value from settings where key='zygisk'" 
 echo "MODS:${'$'}(ls /data/adb/modules 2>/dev/null | tr '\n' ' ')"
 """
 
-    /** Blocking. Asks for root once; returns null when root is not granted. */
     fun read(): RootResult? {
         return try {
             val p = ProcessBuilder("su", "-c", SCRIPT).redirectErrorStream(true).start()

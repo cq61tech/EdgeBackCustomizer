@@ -13,14 +13,12 @@
         <activity
             android:name=".MainActivity"
             android:exported="true">
-            <!-- lets the LSPosed manager open the app even when the launcher icon is hidden -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="de.robv.android.xposed.category.MODULE_SETTINGS" />
             </intent-filter>
         </activity>
 
-        <!-- launcher icon lives on an alias so it can be hidden from Settings -->
         <activity-alias
             android:name=".LauncherAlias"
             android:enabled="true"

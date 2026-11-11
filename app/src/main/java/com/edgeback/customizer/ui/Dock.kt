@@ -41,7 +41,6 @@ private val items = listOf(
     DockItem(Icons.Filled.Settings, R.string.nav_settings),
 )
 
-/** Bottom bar. Floating pill by default; width, height, opacity, text size and gap come from settings. */
 @Composable
 fun Dock(selected: Int, onSelect: (Int) -> Unit, prefs: Prefs) {
     val cs = MaterialTheme.colorScheme

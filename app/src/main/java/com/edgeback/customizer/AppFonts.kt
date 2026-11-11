@@ -10,11 +10,6 @@ import androidx.compose.ui.unit.em
 import java.io.File
 import kotlin.math.roundToInt
 
-/**
- * Font choices for the app UI: the system's Google Sans Flex (rounded axis) when the ROM has it,
- * fonts downloaded into assets/fonts at build time, fonts the user imports, and Android's
- * generic families. Variable fonts get their weight (and roundness) applied per text style.
- */
 object AppFonts {
     class Option(val id: String, val label: String)
     private class Resolved(val family: FontFamily?, val typefaceBased: Boolean)
@@ -23,7 +18,6 @@ object AppFonts {
 
     fun clearCache() = cache.clear()
 
-    /** Google Sans Flex ships with Pixel/AOSP-based ROMs; look for its font file. */
     fun gsfPath(): String? {
         val rx = Regex("(?i).*google.?sans.?flex.*\\.(ttf|otf)")
         for (d in listOf("/system/fonts", "/system_ext/fonts", "/product/fonts", "/vendor/fonts")) {

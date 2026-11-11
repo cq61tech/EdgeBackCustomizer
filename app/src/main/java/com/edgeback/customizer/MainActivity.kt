@@ -63,7 +63,6 @@ private fun App(prefs: Prefs) {
     }
     LaunchedEffect(tab) { hidden.value = false }
 
-    // keep System UI in sync with the settings (debounced while a slider is dragged)
     val ctx = LocalContext.current
     val cs = MaterialTheme.colorScheme
     val custom = prefs.pillColorCustom.value

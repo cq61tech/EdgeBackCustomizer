@@ -3,63 +3,28 @@ package com.edgeback.customizer;
 import android.graphics.Canvas;
 import android.os.Build;
 import android.util.Log;
+import android.view.View;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.lang.reflect.Executable;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 import io.github.libxposed.api.XposedModule;
 
-/**
- * Phase 0 (discovery). Changes no behaviour:
- *  1. dumps fields/methods of the edge-back classes to a file + logcat (tag EBC)
- *  2. scans SystemUI dex for candidate class names
- *  3. installs "probe" hooks that only log (then call the original) so we can
- *     see which methods really run when a back swipe happens.
- */
 public class MainModule extends XposedModule {
 
-    static final String TAG = "EBC";
-    static final String SYSTEMUI = "com.android.systemui";
-    static final String SELF = "com.edgeback.customizer";
-    static final File OUT = new File("/data/user/0/com.android.systemui/files/ebc_dump.txt");
-    static final int PROBE_LIMIT = 40;
+    private static final String TAG = "EBC";
+    private static final String SYSTEMUI = "com.android.systemui";
+    private static final String SELF = "com.edgeback.customizer";
+    private static final File LOG = new File("/data/user/0/com.android.systemui/files/ebc.log");
 
-    static final String[] KNOWN = {
-            "com.android.systemui.navigationbar.gestural.EdgeBackGestureHandler",
-            "com.android.systemui.navigationbar.gestural.BackPanelController",
-            "com.android.systemui.navigationbar.gestural.BackPanel",
-            "com.android.systemui.navigationbar.gestural.NavigationBarEdgePanel",
-            "com.android.systemui.statusbar.VibratorHelper",
-            // added in 0.1.0 (second discovery round)
-            "com.android.systemui.navigationbar.gestural.DisplayBackGestureHandlerImpl",
-            "com.android.systemui.navigationbar.gestural.EdgeBackGestureHandler$5",
-            "com.android.systemui.navigationbar.gestural.BackPanel$AnimatedFloat",
-            "com.android.systemui.navigationbar.gestural.BackPanelController$GestureState",
-            "com.android.systemui.navigationbar.gestural.EdgePanelParams$BackIndicatorDimens",
-            "com.android.systemui.plugins.NavigationEdgeBackPlugin$BackCallback",
-    };
-
-    static final String[] SCAN_NEEDLES = {
-            "EdgeBack", "BackPanel", "EdgePanel", "BackAnimation", "VibratorHelper", "DisplayBackGesture"
-    };
-
-    static final String[] PROBE_METHOD_HINTS = {
-            "trigger", "within", "vibrat", "onmotionevent", "edgeheight", "cancelgesture", "allowgesture"
-    };
-
-    static final ConcurrentHashMap<String, AtomicInteger> COUNTERS = new ConcurrentHashMap<>();
+    private static final String GESTURE_PKG = "com.android.systemui.navigationbar.gestural.";
+    private static final String HANDLER = GESTURE_PKG + "EdgeBackGestureHandler";
+    private static final String PLUGIN = GESTURE_PKG + "BackPanelController";
+    private static final String PANEL = GESTURE_PKG + "BackPanel";
+    private static final String VIBRATOR = "com.android.systemui.statusbar.VibratorHelper";
 
     @Override
     public void onModuleLoaded(ModuleLoadedParam param) {
@@ -70,56 +35,31 @@ public class MainModule extends XposedModule {
     public void onPackageReady(PackageReadyParam param) {
         try {
             if (!param.isFirstPackage()) return;
-            if (SELF.equals(param.getPackageName())) {
+            String pkg = param.getPackageName();
+            if (SELF.equals(pkg)) {
                 markActive(param.getClassLoader());
                 return;
             }
-            if (!SYSTEMUI.equals(param.getPackageName())) return;
-            final ClassLoader cl = param.getClassLoader();
+            if (!SYSTEMUI.equals(pkg)) return;
 
-            try {
-                OUT.delete();
-            } catch (Throwable ignored) {
-            }
-            line("=== EdgeBackCustomizer discovery ===");
-            line("SDK_INT=" + Build.VERSION.SDK_INT + " release=" + Build.VERSION.RELEASE
-                    + " codename=" + Build.VERSION.CODENAME);
-            line("fingerprint=" + Build.FINGERPRINT);
-            line("model=" + Build.MANUFACTURER + " " + Build.MODEL);
-            // lines below are read by the companion app through root ("status." prefix)
+            ClassLoader cl = param.getClassLoader();
+            LOG.delete();
+            line("sdk=" + Build.VERSION.SDK_INT + " device=" + Build.MANUFACTURER + " " + Build.MODEL);
             line("status.framework=" + safe(() -> String.valueOf(getFrameworkName())));
             line("status.version=" + safe(() -> String.valueOf(getFrameworkVersion())));
             line("status.versionCode=" + safe(() -> String.valueOf(getFrameworkVersionCode())));
             line("status.api=" + safe(() -> String.valueOf(getApiVersion())));
             line("status.time=" + System.currentTimeMillis());
-            String statusErr = writeStatus();
-            line("status.file=" + (statusErr == null ? "ok" : statusErr));
 
-            // Known candidates: dump + probe synchronously.
-            for (String name : KNOWN) {
-                Class<?> c = load(cl, name);
-                if (c == null) {
-                    line("MISSING " + name);
-                    continue;
-                }
-                dumpClass(c);
-                probeClass(c);
-            }
-
-            installCore(cl);
-
-            // Scan the dex in the background (no hooks there).
-            Thread t = new Thread(() -> scanAndDump(cl), "EBC-scan");
-            t.setDaemon(true);
-            t.start();
+            hookInput(cl);
+            hookPlugin(cl);
+            hookDraw(cl);
+            hookVibration(cl);
         } catch (Throwable t) {
-            line("onPackageReady failed: " + Log.getStackTraceString(t));
+            line("load failed: " + Log.getStackTraceString(t));
         }
     }
 
-    // ------------------------------------------------------- module status
-
-    /** Tells our own app (running in its own process) that the module is injected. */
     private void markActive(ClassLoader cl) {
         final Class<?> c;
         try {
@@ -135,64 +75,14 @@ public class MainModule extends XposedModule {
         put(c, "apiVersion", () -> String.valueOf(getApiVersion()));
     }
 
-    private static void put(Class<?> c, String field, Supplier<String> value) {
-        try {
-            c.getField(field).set(null, value.get());
-        } catch (Throwable t) {
-            Log.w(TAG, "markActive " + field, t);
-        }
-    }
-
-    private static String safe(Supplier<String> s) {
-        try {
-            return s.get();
-        } catch (Throwable t) {
-            return "";
-        }
-    }
-
-    /** Best-effort copy of the status as its own file. Returns null on success, else the error. */
-    private String writeStatus() {
-        try {
-            File f = new File("/data/user/0/com.android.systemui/files/ebc_status.txt");
-            File dir = f.getParentFile();
-            if (dir != null && !dir.exists()) dir.mkdirs();
-            long boot = System.currentTimeMillis() - android.os.SystemClock.elapsedRealtime();
-            StringBuilder sb = new StringBuilder();
-            sb.append("framework=").append(safe(() -> String.valueOf(getFrameworkName()))).append('\n');
-            sb.append("version=").append(safe(() -> String.valueOf(getFrameworkVersion()))).append('\n');
-            sb.append("versionCode=").append(safe(() -> String.valueOf(getFrameworkVersionCode()))).append('\n');
-            sb.append("api=").append(safe(() -> String.valueOf(getApiVersion()))).append('\n');
-            sb.append("time=").append(System.currentTimeMillis()).append('\n');
-            sb.append("boot=").append(boot).append('\n');
-            try (FileWriter w = new FileWriter(f, false)) {
-                w.write(sb.toString());
-            }
-            return null;
-        } catch (Throwable t) {
-            return String.valueOf(t);
-        }
-    }
-
-    // ------------------------------------------------------------ phase 1
-
-    /** Hooks the edge-gesture input entry point: vertical zone + haptics (see Core). */
-    private void installCore(ClassLoader cl) {
-        Class<?> h = load(cl, KNOWN[0]);
-        if (h == null) {
-            line("core: EdgeBackGestureHandler missing");
-            return;
-        }
-        Method target = null;
-        for (Method x : h.getDeclaredMethods()) {
-            if (x.getName().equals("onInputEvent") && x.getParameterTypes().length == 1) target = x;
-        }
-        if (target == null) {
-            line("core: onInputEvent missing");
+    private void hookInput(ClassLoader cl) {
+        Method m = find(load(cl, HANDLER), "onInputEvent", 1);
+        if (m == null) {
+            line("input: onInputEvent not found");
             return;
         }
         try {
-            hook((Executable) target).intercept(chain -> {
+            hook((Executable) m).intercept(chain -> {
                 boolean drop = false;
                 try {
                     drop = Core.beforeInput(chain.getThisObject(), chain.getArg(0));
@@ -201,25 +91,57 @@ public class MainModule extends XposedModule {
                 if (drop) return null;
                 return chain.proceed();
             });
-            line("core: onInputEvent hook installed");
+            line("input: hooked");
         } catch (Throwable t) {
-            line("core: hook failed " + t);
+            line("input: " + t);
         }
+    }
 
-        // pill look: wrap BackPanel.onDraw
-        Class<?> panel = load(cl, KNOWN[2]);
-        Method draw = null;
-        if (panel != null) {
-            for (Method x : panel.getDeclaredMethods()) {
-                if (x.getName().equals("onDraw") && x.getParameterTypes().length == 1) draw = x;
+    private void hookPlugin(ClassLoader cl) {
+        Class<?> c = load(cl, PLUGIN);
+        Method motion = find(c, "onMotionEvent", 1);
+        Method haptic = find(c, "setEdgeHapticEnabled", 1);
+        try {
+            if (motion != null) {
+                hook((Executable) motion).intercept(chain -> {
+                    boolean drop = false;
+                    try {
+                        drop = Core.pluginGate(chain.getThisObject(), chain.getArg(0));
+                    } catch (Throwable ignored) {
+                    }
+                    if (drop) return null;
+                    return chain.proceed();
+                });
+                line("plugin: motion hooked");
             }
+            if (haptic != null) {
+                hook((Executable) haptic).intercept(chain -> {
+                    try {
+                        Core.rememberHaptic(chain.getArg(0));
+                    } catch (Throwable ignored) {
+                    }
+                    Object result = chain.proceed();
+                    try {
+                        Core.applyHaptic(chain.getThisObject());
+                    } catch (Throwable ignored) {
+                    }
+                    return result;
+                });
+                line("plugin: haptic hooked");
+            }
+        } catch (Throwable t) {
+            line("plugin: " + t);
         }
-        if (draw == null) {
-            line("core: BackPanel.onDraw missing");
+    }
+
+    private void hookDraw(ClassLoader cl) {
+        Method m = find(load(cl, PANEL), "onDraw", 1);
+        if (m == null) {
+            line("draw: onDraw not found");
             return;
         }
         try {
-            hook((Executable) draw).intercept(chain -> {
+            hook((Executable) m).intercept(chain -> {
                 Object view = chain.getThisObject();
                 Object arg = chain.getArg(0);
                 Canvas canvas = arg instanceof Canvas ? (Canvas) arg : null;
@@ -241,164 +163,46 @@ public class MainModule extends XposedModule {
                     }
                 }
             });
-            line("core: BackPanel.onDraw hook installed");
+            line("draw: hooked");
         } catch (Throwable t) {
-            line("core: draw hook failed " + t);
+            line("draw: " + t);
         }
     }
 
-    // ---------------------------------------------------------------- probe
-
-    private void probeClass(Class<?> c) {
-        int hooked = 0;
-        Method[] methods;
+    private void hookVibration(ClassLoader cl) {
         try {
-            methods = c.getDeclaredMethods();
-        } catch (Throwable t) {
-            line("probe: getDeclaredMethods failed for " + c.getName() + ": " + t);
-            return;
-        }
-        for (Method m : methods) {
-            if (Modifier.isAbstract(m.getModifiers()) || Modifier.isNative(m.getModifiers())) continue;
-            if (!matchesHint(m.getName())) continue;
-            final String label = c.getSimpleName() + "." + m.getName() + sig(m);
-            try {
+            Class<?> helper = load(cl, VIBRATOR);
+            if (helper != null) {
+                for (Method m : helper.getDeclaredMethods()) {
+                    if (!m.getName().equals("vibrate")) continue;
+                    hook((Executable) m).intercept(chain -> {
+                        if (Core.muteVibration()) return null;
+                        return chain.proceed();
+                    });
+                }
+            }
+            for (Method m : View.class.getDeclaredMethods()) {
+                if (!m.getName().equals("performHapticFeedback")) continue;
                 hook((Executable) m).intercept(chain -> {
-                    AtomicInteger n = COUNTERS.computeIfAbsent(label, k -> new AtomicInteger());
-                    int i = n.incrementAndGet();
-                    if (i <= PROBE_LIMIT) {
-                        line("CALL " + label + " #" + i);
-                    }
+                    if (Core.muteViewHaptic(chain.getThisObject())) return Boolean.FALSE;
                     return chain.proceed();
                 });
-                hooked++;
-            } catch (Throwable t) {
-                line("probe hook failed " + label + ": " + t);
             }
-        }
-        line("probe: hooked " + hooked + " method(s) in " + c.getName());
-    }
-
-    private static boolean matchesHint(String methodName) {
-        String n = methodName.toLowerCase();
-        for (String h : PROBE_METHOD_HINTS) {
-            if (n.contains(h)) return true;
-        }
-        return false;
-    }
-
-    // ----------------------------------------------------------------- dump
-
-    private static void scanAndDump(ClassLoader cl) {
-        try {
-            List<String> names = scanClassNames(cl);
-            StringBuilder sb = new StringBuilder();
-            sb.append("--- scan: ").append(names.size()).append(" matching class names ---\n");
-            for (String n : names) sb.append(n).append('\n');
-            append(sb.toString());
-
-            Set<String> extra = new LinkedHashSet<>();
-            for (String n : names) {
-                if (n.contains("$")) continue;
-                String simple = n.substring(n.lastIndexOf('.') + 1);
-                if (simple.contains("EdgeBackGestureHandler") || simple.contains("BackPanel")
-                        || simple.contains("EdgePanel")) {
-                    boolean known = false;
-                    for (String k : KNOWN) if (k.equals(n)) known = true;
-                    if (!known) extra.add(n);
-                }
-            }
-            int count = 0;
-            for (String n : extra) {
-                if (count++ >= 12) break;
-                Class<?> c = load(cl, n);
-                if (c != null) dumpClass(c);
-            }
-            line("=== scan done ===");
+            line("vibration: hooked");
         } catch (Throwable t) {
-            line("scanAndDump failed: " + Log.getStackTraceString(t));
+            line("vibration: " + t);
         }
     }
 
-    @SuppressWarnings({"unchecked", "JavaReflectionMemberAccess", "PrivateApi"})
-    private static List<String> scanClassNames(ClassLoader cl) {
-        List<String> res = new ArrayList<>();
+    private static Method find(Class<?> c, String name, int params) {
+        if (c == null) return null;
         try {
-            Class<?> bdcl = Class.forName("dalvik.system.BaseDexClassLoader");
-            Field pl = bdcl.getDeclaredField("pathList");
-            pl.setAccessible(true);
-            Object pathList = pl.get(cl);
-            Field de = pathList.getClass().getDeclaredField("dexElements");
-            de.setAccessible(true);
-            Object[] elements = (Object[]) de.get(pathList);
-            for (Object el : elements) {
-                Field df = el.getClass().getDeclaredField("dexFile");
-                df.setAccessible(true);
-                Object dexFile = df.get(el);
-                if (dexFile == null) continue;
-                Method entries = dexFile.getClass().getMethod("entries");
-                Enumeration<String> en = (Enumeration<String>) entries.invoke(dexFile);
-                while (en.hasMoreElements()) {
-                    String n = en.nextElement();
-                    for (String needle : SCAN_NEEDLES) {
-                        if (n.contains(needle)) {
-                            res.add(n);
-                            break;
-                        }
-                    }
-                    if (res.size() >= 400) return res;
-                }
-            }
-        } catch (Throwable t) {
-            line("scanClassNames failed: " + t);
-        }
-        return res;
-    }
-
-    private static void dumpClass(Class<?> c) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("\n##### ").append(c.getName());
-        try {
-            Class<?> sup = c.getSuperclass();
-            if (sup != null) sb.append(" extends ").append(sup.getName());
-            Class<?>[] ifs = c.getInterfaces();
-            if (ifs.length > 0) {
-                sb.append(" implements");
-                for (Class<?> i : ifs) sb.append(' ').append(i.getName());
+            for (Method m : c.getDeclaredMethods()) {
+                if (m.getName().equals(name) && m.getParameterTypes().length == params) return m;
             }
         } catch (Throwable ignored) {
         }
-        sb.append('\n');
-        try {
-            for (Field f : c.getDeclaredFields()) {
-                sb.append("F ").append(Modifier.toString(f.getModifiers())).append(' ')
-                        .append(f.getType().getName()).append(' ').append(f.getName()).append('\n');
-            }
-        } catch (Throwable t) {
-            sb.append("fields failed: ").append(t).append('\n');
-        }
-        try {
-            for (Method m : c.getDeclaredMethods()) {
-                sb.append("M ").append(Modifier.toString(m.getModifiers())).append(' ')
-                        .append(m.getReturnType().getName()).append(' ')
-                        .append(m.getName()).append(sig(m)).append('\n');
-            }
-        } catch (Throwable t) {
-            sb.append("methods failed: ").append(t).append('\n');
-        }
-        append(sb.toString());
-    }
-
-    // -------------------------------------------------------------- helpers
-
-    private static String sig(Method m) {
-        StringBuilder sb = new StringBuilder("(");
-        Class<?>[] p = m.getParameterTypes();
-        for (int i = 0; i < p.length; i++) {
-            if (i > 0) sb.append(',');
-            sb.append(p[i].getSimpleName());
-        }
-        return sb.append(')').toString();
+        return null;
     }
 
     private static Class<?> load(ClassLoader cl, String name) {
@@ -409,17 +213,29 @@ public class MainModule extends XposedModule {
         }
     }
 
-    static void line(String s) {
-        Log.i(TAG, s);
-        append(s + "\n");
+    private static void put(Class<?> c, String field, Supplier<String> value) {
+        try {
+            c.getField(field).set(null, value.get());
+        } catch (Throwable t) {
+            Log.w(TAG, "markActive " + field, t);
+        }
     }
 
-    private static synchronized void append(String block) {
+    private static String safe(Supplier<String> s) {
         try {
-            File dir = OUT.getParentFile();
+            return s.get();
+        } catch (Throwable t) {
+            return "";
+        }
+    }
+
+    static synchronized void line(String s) {
+        Log.i(TAG, s);
+        try {
+            File dir = LOG.getParentFile();
             if (dir != null && !dir.exists()) dir.mkdirs();
-            try (FileWriter w = new FileWriter(OUT, true)) {
-                w.write(block);
+            try (FileWriter w = new FileWriter(LOG, true)) {
+                w.write(s + "\n");
             }
         } catch (Throwable ignored) {
         }

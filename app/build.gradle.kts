@@ -12,11 +12,10 @@ android {
         applicationId = "com.edgeback.customizer"
         minSdk = 31
         targetSdk = 36
-        versionCode = 8
-        versionName = "0.5.0-custom"
+        versionCode = 9
+        versionName = "0.5.1"
     }
 
-    // Fixed debug key: every CI build is signed the same way, so new APKs install over old ones.
     signingConfigs {
         getByName("debug") {
             storeFile = file("debug.keystore")
@@ -40,7 +39,6 @@ android {
 }
 
 dependencies {
-    // Xposed API: only needed at compile time, the framework provides it.
     compileOnly("io.github.libxposed:api:102.0.0")
 
     val composeBom = platform("androidx.compose:compose-bom:2026.05.00")

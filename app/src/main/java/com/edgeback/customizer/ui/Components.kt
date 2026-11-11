@@ -47,7 +47,6 @@ import kotlin.math.roundToInt
 
 val CardShape = RoundedCornerShape(32.dp)
 
-/** Scrollable page body. Leaves room at the bottom for the floating dock. */
 @Composable
 fun ScreenColumn(content: @Composable ColumnScope.() -> Unit) {
     Column(
@@ -62,7 +61,6 @@ fun ScreenColumn(content: @Composable ColumnScope.() -> Unit) {
     )
 }
 
-/** Big rounded card with an optional primary-colored section title. */
 @Composable
 fun SectionCard(
     title: String?,
@@ -113,7 +111,6 @@ fun SwitchRow(
 private fun fmt(v: Float, decimals: Int): String =
     if (decimals == 0) v.roundToInt().toString() else "%.${decimals}f".format(v)
 
-/** Title + tappable value (tap to type an exact number) + slider. */
 @Composable
 fun SliderRow(
     label: String,
@@ -211,7 +208,6 @@ fun WideOutlinedButton(text: String, modifier: Modifier = Modifier, onClick: () 
     OutlinedButton(onClick = onClick, modifier = modifier.fillMaxWidth()) { Text(text) }
 }
 
-/** Returns an action that restarts System UI through root and shows a toast. */
 @Composable
 fun rememberRestartSystemUi(): () -> Unit {
     val ctx = LocalContext.current

@@ -4,14 +4,9 @@ import android.content.Context
 import android.provider.Settings
 import kotlin.math.roundToInt
 
-/**
- * Sends the live settings to System UI through Settings.Global "ebc_cfg" = "hooks,haptic,zone,look,alpha,scale100,round,bg,fg,grad,bg2,angle,pw,ph,arrowSize,stroke10,glow,offsetY,left,right,edgeW".
- * Needs WRITE_SECURE_SETTINGS; if it is missing and root was already granted, grants it once via root.
- */
 object ConfigSync {
     private const val KEY = "ebc_cfg"
 
-    /** Colors are ARGB ints taken from the app theme (so the real pill matches the app). */
     class Colors(val bg: Int, val fg: Int, val bg2: Int)
 
     fun value(p: Prefs, c: Colors): String {
@@ -27,7 +22,6 @@ object ConfigSync {
         ).joinToString(",")
     }
 
-    /** Blocking. Returns true when the value reached Settings.Global. */
     fun push(ctx: Context, v: String, allowRoot: Boolean): Boolean {
         return try {
             Settings.Global.putString(ctx.contentResolver, KEY, v)
