@@ -20,35 +20,50 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Logic that runs inside System UI.
- *  - input: vertical active zone + haptics (Phase 1)
- *  - draw : colors, gradient, opacity, size and roundness of the back pill (Phase 2)
- * Settings come from Settings.Global "ebc_cfg", written by the app:
- *   hooks,haptic,zone,look,alpha,scale100,round,bg,fg,grad,bg2
+ *  - input: active zone, left/right edge switches, edge width, haptics
+ *  - draw : colors, gradient (+angle), opacity, size (uniform/width/height), roundness,
+ *           arrow size and thickness, glow and vertical offset of the back pill
+ * Settings come from Settings.Global "ebc_cfg", written by the app (see ConfigSync).
  */
 final class Core {
     private Core() {}
 
     private static final String CFG_KEY = "ebc_cfg";
 
-    private static volatile int hooks = 1;     // 1 = module active
-    private static volatile int haptic = 1;    // 1 = keep haptics, 0 = silence
-    private static volatile int zone = 100;    // % of screen height, from the bottom
-    private static volatile int look = 0;      // 1 = apply the custom pill look
-    private static volatile int alpha = 100;   // %
+    private static volatile int hooks = 1;
+    private static volatile int haptic = 1;
+    private static volatile int zone = 100;
+    private static volatile int look = 0;
+    private static volatile int alpha = 100;
     private static volatile int scale100 = 100;
-    private static volatile int round = 100;   // % (100 = fully round)
+    private static volatile int round = 100;
     private static volatile int bg = 0;
     private static volatile int fg = 0;
     private static volatile int grad = 0;
     private static volatile int bg2 = 0;
+    private static volatile int angle = 90;
+    private static volatile int pw = 100;
+    private static volatile int ph = 100;
+    private static volatile int arrowSize = 100;
+    private static volatile int stroke10 = 0;
+    private static volatile int glow = 0;
+    private static volatile int offsetY = 0;
+    private static volatile int leftOn = 1;
+    private static volatile int rightOn = 1;
+    private static volatile int edgeW = 100;
     private static volatile long lastRead = 0;
     private static boolean dropping = false;
+
+    // edge width bookkeeping: stock values and what we last wrote
+    private static int origL = -1, origR = -1, setL = -1, setR = -1;
 
     private static final ConcurrentHashMap<String, Field> FIELDS = new ConcurrentHashMap<>();
     private static final AtomicInteger DBG = new AtomicInteger();
     private static final AtomicInteger DBG_DRAW = new AtomicInteger();
     /** per panel view: [stock bg color, stock arrow color, applied(0/1)] */
     private static final Map<Object, int[]> ORIG = Collections.synchronizedMap(new WeakHashMap<>());
+    /** per panel view: [stock arrow stroke width] */
+    private static final Map<Object, float[]> ORIG_F = Collections.synchronizedMap(new WeakHashMap<>());
 
     // ------------------------------------------------------------------ input
 
@@ -65,22 +80,28 @@ final class Core {
             set(plugin, "edgeHapticEnabled", want);
         }
 
+        applyEdgeWidth(handler);
+
         if (!(event instanceof MotionEvent)) return false;
         MotionEvent m = (MotionEvent) event;
         int action = m.getActionMasked();
 
         if (action == MotionEvent.ACTION_DOWN) {
             dropping = false;
-            if (hooks == 1 && zone < 100) {
+            if (hooks == 1) {
                 Object size = get(handler, "mDisplaySize");
-                if (size instanceof Point && ((Point) size).y > 0) {
-                    float limit = ((Point) size).y * (1f - zone / 100f);
-                    dropping = m.getRawY() < limit;
+                if (size instanceof Point && ((Point) size).y > 0 && ((Point) size).x > 0) {
+                    Point sz = (Point) size;
+                    if (zone < 100) {
+                        dropping = m.getRawY() < sz.y * (1f - zone / 100f);
+                    }
+                    boolean left = m.getRawX() < sz.x / 2f;
+                    if ((left && leftOn == 0) || (!left && rightOn == 0)) dropping = true;
                 }
             }
             if (DBG.getAndIncrement() < 20) {
-                MainModule.line("input DOWN y=" + m.getRawY() + " hooks=" + hooks + " haptic=" + haptic
-                        + " zone=" + zone + " drop=" + dropping);
+                MainModule.line("input DOWN x=" + m.getRawX() + " y=" + m.getRawY() + " zone=" + zone
+                        + " left=" + leftOn + " right=" + rightOn + " edgeW=" + edgeW + " drop=" + dropping);
             }
         }
         boolean drop = dropping;
@@ -88,14 +109,30 @@ final class Core {
         return drop;
     }
 
+    /** Scales the width of the edge strip that starts a back gesture. */
+    private static void applyEdgeWidth(Object handler) {
+        Object l = get(handler, "mEdgeWidthLeft");
+        Object r = get(handler, "mEdgeWidthRight");
+        if (!(l instanceof Integer) || !(r instanceof Integer)) return;
+        int curL = (Integer) l;
+        int curR = (Integer) r;
+        if (curL != setL) origL = curL; // the system changed it (or first time): new stock value
+        if (curR != setR) origR = curR;
+        float f = (hooks == 1) ? edgeW / 100f : 1f;
+        int nl = Math.max(1, Math.round(origL * f));
+        int nr = Math.max(1, Math.round(origR * f));
+        setL = nl;
+        setR = nr;
+        if (nl != curL) set(handler, "mEdgeWidthLeft", Integer.valueOf(nl));
+        if (nr != curR) set(handler, "mEdgeWidthRight", Integer.valueOf(nr));
+    }
+
     // ------------------------------------------------------------------- draw
 
     static final class DrawState {
         int saveCount = -1;
-        Object edge;
-        Object far;
-        float edgeOrig;
-        float farOrig;
+        Object edge, far, arrowLen, arrowHei;
+        float edgeOrig, farOrig, lenOrig, heiOrig;
     }
 
     /** Called right before BackPanel.onDraw. Returns state to undo after the draw. */
@@ -111,9 +148,12 @@ final class Core {
         Paint fgPaint = (Paint) fgObj;
 
         int[] orig = ORIG.get(view);
-        if (orig == null) {
+        float[] origF = ORIG_F.get(view);
+        if (orig == null || origF == null) {
             orig = new int[]{bgPaint.getColor(), fgPaint.getColor(), 0};
+            origF = new float[]{fgPaint.getStrokeWidth()};
             ORIG.put(view, orig);
+            ORIG_F.put(view, origF);
         }
         boolean active = hooks == 1 && look == 1;
 
@@ -121,11 +161,14 @@ final class Core {
             if (orig[2] == 1) { // put the stock look back
                 bgPaint.setColor(orig[0]);
                 fgPaint.setColor(orig[1]);
+                fgPaint.setStrokeWidth(origF[0]);
                 bgPaint.setShader(null);
+                bgPaint.clearShadowLayer();
                 orig[2] = 0;
-            } else { // keep tracking the stock colors (they change with the theme)
+            } else { // keep tracking the stock values (they change with the theme)
                 orig[0] = bgPaint.getColor();
                 orig[1] = fgPaint.getColor();
+                origF[0] = fgPaint.getStrokeWidth();
             }
             return null;
         }
@@ -133,18 +176,31 @@ final class Core {
         if (orig[2] == 0) { // first custom draw: remember what stock looked like
             orig[0] = bgPaint.getColor();
             orig[1] = fgPaint.getColor();
+            origF[0] = fgPaint.getStrokeWidth();
             orig[2] = 1;
         }
+        float density = v.getResources().getDisplayMetrics().density;
+
         bgPaint.setColor(bg);
         fgPaint.setColor(fg);
+        fgPaint.setStrokeWidth(stroke10 > 0 ? stroke10 / 10f * density : origF[0]);
+        if (glow > 0) {
+            bgPaint.setShadowLayer(glow * density, 0f, 0f, bg);
+        } else {
+            bgPaint.clearShadowLayer();
+        }
 
         Object bw = get(view, "backgroundWidth");
         Object bh = get(view, "backgroundHeight");
         float bwv = getFloat(bw, "pos", 0f);
         float bhv = getFloat(bh, "pos", 0f);
 
-        if (grad == 1 && bhv > 0f) {
-            bgPaint.setShader(new LinearGradient(0f, -bhv / 2f, 0f, bhv / 2f, bg, bg2, Shader.TileMode.CLAMP));
+        if (grad == 1 && bwv > 0f && bhv > 0f) {
+            double a = Math.toRadians(angle);
+            float dx = (float) (Math.cos(a) * bwv / 2f);
+            float dy = (float) (Math.sin(a) * bhv / 2f);
+            float cx = bwv / 2f;
+            bgPaint.setShader(new LinearGradient(cx - dx, -dy, cx + dx, dy, bg, bg2, Shader.TileMode.CLAMP));
         } else {
             bgPaint.setShader(null);
         }
@@ -157,10 +213,12 @@ final class Core {
         } else {
             st.saveCount = canvas.save();
         }
-        if (scale100 != 100) {
-            float s = scale100 / 100f;
+        if (offsetY != 0) canvas.translate(0f, offsetY * density);
+        float sx = scale100 / 100f * pw / 100f;
+        float sy = scale100 / 100f * ph / 100f;
+        if (sx != 1f || sy != 1f) {
             boolean left = Boolean.TRUE.equals(get(view, "isLeftPanel"));
-            canvas.scale(s, s, left ? 0f : w, h * 0.5f);
+            canvas.scale(sx, sy, left ? 0f : w, h * 0.5f);
         }
 
         st.edge = get(view, "backgroundEdgeCornerRadius");
@@ -172,9 +230,20 @@ final class Core {
             setFloat(st.edge, "pos", target);
             setFloat(st.far, "pos", target);
         }
+
+        if (arrowSize != 100) {
+            st.arrowLen = get(view, "arrowLength");
+            st.arrowHei = get(view, "arrowHeight");
+            st.lenOrig = getFloat(st.arrowLen, "pos", 0f);
+            st.heiOrig = getFloat(st.arrowHei, "pos", 0f);
+            setFloat(st.arrowLen, "pos", st.lenOrig * arrowSize / 100f);
+            setFloat(st.arrowHei, "pos", st.heiOrig * arrowSize / 100f);
+        }
+
         if (DBG_DRAW.getAndIncrement() < 6) {
-            MainModule.line("draw look=1 alpha=" + alpha + " scale=" + scale100 + " round=" + round
-                    + " grad=" + grad + " bw=" + bwv + " bh=" + bhv + " target=" + target);
+            MainModule.line("draw look=1 alpha=" + alpha + " scale=" + scale100 + " pw=" + pw + " ph=" + ph
+                    + " round=" + round + " grad=" + grad + " angle=" + angle + " arrow=" + arrowSize
+                    + " stroke10=" + stroke10 + " glow=" + glow + " bw=" + bwv + " bh=" + bhv);
         }
         return st;
     }
@@ -184,6 +253,10 @@ final class Core {
         if (st.saveCount >= 0) canvas.restoreToCount(st.saveCount);
         setFloat(st.edge, "pos", st.edgeOrig);
         setFloat(st.far, "pos", st.farOrig);
+        if (st.arrowLen != null) {
+            setFloat(st.arrowLen, "pos", st.lenOrig);
+            setFloat(st.arrowHei, "pos", st.heiOrig);
+        }
     }
 
     // ----------------------------------------------------------------- config
@@ -199,17 +272,31 @@ final class Core {
             String[] p = v.split(",");
             hooks = num(p, 0, 1);
             haptic = num(p, 1, 1);
-            zone = Math.max(20, Math.min(100, num(p, 2, 100)));
+            zone = clamp(num(p, 2, 100), 20, 100);
             look = num(p, 3, 0);
-            alpha = Math.max(20, Math.min(100, num(p, 4, 100)));
-            scale100 = Math.max(50, Math.min(200, num(p, 5, 100)));
-            round = Math.max(0, Math.min(100, num(p, 6, 100)));
+            alpha = clamp(num(p, 4, 100), 20, 100);
+            scale100 = clamp(num(p, 5, 100), 30, 250);
+            round = clamp(num(p, 6, 100), 0, 100);
             bg = num(p, 7, 0);
             fg = num(p, 8, 0);
             grad = num(p, 9, 0);
             bg2 = num(p, 10, 0);
+            angle = num(p, 11, 90);
+            pw = clamp(num(p, 12, 100), 30, 300);
+            ph = clamp(num(p, 13, 100), 30, 300);
+            arrowSize = clamp(num(p, 14, 100), 30, 300);
+            stroke10 = clamp(num(p, 15, 0), 0, 200);
+            glow = clamp(num(p, 16, 0), 0, 60);
+            offsetY = clamp(num(p, 17, 0), -400, 400);
+            leftOn = num(p, 18, 1);
+            rightOn = num(p, 19, 1);
+            edgeW = clamp(num(p, 20, 100), 30, 400);
         } catch (Throwable ignored) {
         }
+    }
+
+    private static int clamp(int v, int lo, int hi) {
+        return Math.max(lo, Math.min(hi, v));
     }
 
     private static int num(String[] p, int i, int def) {

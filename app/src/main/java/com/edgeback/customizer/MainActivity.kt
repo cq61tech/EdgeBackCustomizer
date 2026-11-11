@@ -66,15 +66,18 @@ private fun App(prefs: Prefs) {
     // keep System UI in sync with the settings (debounced while a slider is dragged)
     val ctx = LocalContext.current
     val cs = MaterialTheme.colorScheme
-    val colors = ConfigSync.Colors(cs.primary.toArgb(), cs.onPrimary.toArgb(), cs.tertiary.toArgb())
-    LaunchedEffect(
-        prefs.enableHooks.value, prefs.haptic.value, prefs.zonePercent.value,
-        prefs.pillLook.value, prefs.pillGradient.value, prefs.pillAlpha.value,
-        prefs.pillScale.value, prefs.pillRound.value,
-        colors.bg, colors.fg, colors.bg2,
-    ) {
+    val custom = prefs.pillColorCustom.value
+    val colors = ConfigSync.Colors(
+        (if (custom) hslColor(prefs.bgH.value, prefs.bgS.value, prefs.bgL.value) else cs.primary).toArgb(),
+        (if (custom) hslColor(prefs.fgH.value, prefs.fgS.value, prefs.fgL.value) else cs.onPrimary).toArgb(),
+        (if (custom) hslColor(prefs.g2H.value, prefs.g2S.value, prefs.g2L.value) else cs.tertiary).toArgb(),
+    )
+    val cfg = ConfigSync.value(prefs, colors)
+    LaunchedEffect(cfg) {
         delay(300)
-        withContext(Dispatchers.IO) { ConfigSync.push(ctx, prefs, colors) }
+        withContext(Dispatchers.IO) {
+            ConfigSync.push(ctx, cfg, prefs.rootChecked.value && prefs.rootSolution.value.isNotBlank())
+        }
     }
 
     Surface(

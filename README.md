@@ -11,3 +11,10 @@ Build: push to `main`, GitHub Actions produces the debug APK artifact.
 
 Note: `app/src/main/res/drawable-nodpi/header_sky.jpg` is a placeholder header image.
 Replace it with an image you have the rights to before publishing.
+
+## Fonts
+
+The app UI can use rounded variable fonts (Nunito, Quicksand, Fredoka, Outfit, Manrope, Baloo 2,
+Comfortaa, DM Sans). They are SIL Open Font License 1.1 fonts from https://github.com/google/fonts and
+are downloaded by the GitHub Actions workflow into `app/src/main/assets/fonts/` (not committed).
+You can also import your own .ttf/.otf from Settings -> Font.

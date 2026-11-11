@@ -20,6 +20,23 @@ jobs:
         with:
           gradle-version: '8.14.3'
 
+      - name: Download fonts (SIL OFL, from google/fonts)
+        shell: bash
+        continue-on-error: true
+        run: |
+          mkdir -p app/src/main/assets/fonts
+          base="https://raw.githubusercontent.com/google/fonts/main/ofl"
+          dl() { curl -fsSL "$base/$1" -o "app/src/main/assets/fonts/$2" || { echo "skip $2"; rm -f "app/src/main/assets/fonts/$2"; }; }
+          dl 'nunito/Nunito%5Bwght%5D.ttf' Nunito.ttf
+          dl 'quicksand/Quicksand%5Bwght%5D.ttf' Quicksand.ttf
+          dl 'fredoka/Fredoka%5Bwdth%2Cwght%5D.ttf' Fredoka.ttf
+          dl 'outfit/Outfit%5Bwght%5D.ttf' Outfit.ttf
+          dl 'manrope/Manrope%5Bwght%5D.ttf' Manrope.ttf
+          dl 'baloo2/Baloo2%5Bwght%5D.ttf' Baloo2.ttf
+          dl 'comfortaa/Comfortaa%5Bwght%5D.ttf' Comfortaa.ttf
+          dl 'dmsans/DMSans%5Bopsz%2Cwght%5D.ttf' DMSans.ttf
+          ls -la app/src/main/assets/fonts
+
       - name: Build
         shell: bash
         run: gradle :app:assembleDebug --stacktrace --console=plain 2>&1 | tee build.log

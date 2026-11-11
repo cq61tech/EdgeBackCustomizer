@@ -1,6 +1,7 @@
 package com.edgeback.customizer.ui
 
 import android.os.Build
+import android.provider.OpenableColumns
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -31,7 +32,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import java.io.File
 import androidx.core.os.LocaleListCompat
+import com.edgeback.customizer.AppFonts
 import com.edgeback.customizer.ModuleStatus
 import com.edgeback.customizer.Prefs
 import com.edgeback.customizer.R
@@ -67,6 +70,39 @@ fun SettingsScreen(prefs: Prefs) {
     val tImported = stringResource(R.string.toast_imported)
     val tFailed = stringResource(R.string.toast_failed)
     val unknown = stringResource(R.string.unknown)
+    val tFont = stringResource(R.string.card_font)
+    val tFontImported = stringResource(R.string.font_imported)
+    val autoLabel = stringResource(R.string.font_auto)
+    val defaultLabel = stringResource(R.string.font_default)
+    var fontTick by remember { mutableStateOf(0) }
+    val fontOptions = remember(fontTick, autoLabel, defaultLabel) {
+        AppFonts.options(ctx, autoLabel, defaultLabel)
+    }
+    val importFont = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument(),
+    ) { uri ->
+        if (uri != null) {
+            val ok = runCatching {
+                var name = "font"
+                ctx.contentResolver.query(uri, null, null, null, null)?.use { c ->
+                    if (c.moveToFirst()) {
+                        val i = c.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                        if (i >= 0) name = c.getString(i) ?: name
+                    }
+                }
+                name = name.replace(Regex("[^A-Za-z0-9._-]"), "_")
+                if (!name.endsWith(".ttf", true) && !name.endsWith(".otf", true)) name += ".ttf"
+                val dir = File(ctx.filesDir, "fonts").apply { mkdirs() }
+                ctx.contentResolver.openInputStream(uri)?.use { input ->
+                    File(dir, name).outputStream().use { input.copyTo(it) }
+                }
+                AppFonts.clearCache()
+                prefs.fontId.value = "file:$name"
+                fontTick++
+            }.isSuccess
+            Toast.makeText(ctx, if (ok) tFontImported else tFailed, Toast.LENGTH_SHORT).show()
+        }
+    }
 
     val exportLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/json"),
@@ -144,6 +180,36 @@ fun SettingsScreen(prefs: Prefs) {
                     prefs.accentHue.value = it
                 }
                 SwitchRow(tAmoled, null, prefs.amoled.value) { prefs.amoled.value = it }
+            }
+        },
+        Entry("$tFont ${stringResource(R.string.font_weight)} ${stringResource(R.string.font_scale)}") {
+            SectionCard(tFont) {
+                Row(
+                    Modifier.horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    fontOptions.forEach { o ->
+                        FilterChip(
+                            selected = prefs.fontId.value == o.id,
+                            onClick = { prefs.fontId.value = o.id },
+                            label = { Text(o.label) },
+                        )
+                    }
+                }
+                WideOutlinedButton(stringResource(R.string.font_import)) { importFont.launch(arrayOf("*/*")) }
+                SliderRow(stringResource(R.string.font_weight), prefs.fontWeight.value, 100f..900f, "") {
+                    prefs.fontWeight.value = it
+                }
+                SliderRow(stringResource(R.string.font_round), prefs.fontRound.value, 0f..100f, "%") {
+                    prefs.fontRound.value = it
+                }
+                SliderRow(stringResource(R.string.font_scale), prefs.fontScale.value, 80f..140f, "%") {
+                    prefs.fontScale.value = it
+                }
+                SliderRow(stringResource(R.string.font_spacing), prefs.fontSpacing.value, -20f..80f, " ‰") {
+                    prefs.fontSpacing.value = it
+                }
+                Text(stringResource(R.string.quote), style = MaterialTheme.typography.titleLarge)
             }
         },
         Entry("$tBottom $tDock") {

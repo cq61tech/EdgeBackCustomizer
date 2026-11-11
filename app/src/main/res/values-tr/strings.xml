@@ -117,4 +117,33 @@
     <string name="toast_exported">Ayarlar dışa aktarıldı</string>
     <string name="toast_imported">Ayarlar içe aktarıldı</string>
     <string name="toast_failed">Bir şeyler ters gitti</string>
+    <string name="card_size">Boyut ve şekil</string>
+    <string name="custom_colors_title">Özel renkler</string>
+    <string name="custom_colors_summary">Uygulama teması yerine renkleri kendin seç</string>
+    <string name="color_bg">Baloncuk rengi</string>
+    <string name="color_arrow">Ok rengi</string>
+    <string name="color_grad">Gradyan bitiş rengi</string>
+    <string name="hue">Ton</string>
+    <string name="saturation">Doygunluk</string>
+    <string name="lightness">Açıklık</string>
+    <string name="grad_angle">Gradyan açısı</string>
+    <string name="opt_width">Genişlik çarpanı</string>
+    <string name="opt_height">Yükseklik çarpanı</string>
+    <string name="opt_arrow_size">Ok boyutu</string>
+    <string name="opt_arrow_stroke">Ok kalınlığı (0 = stok)</string>
+    <string name="opt_glow">Parlama</string>
+    <string name="opt_offset">Dikey kaydırma</string>
+    <string name="opt_edge_width">Kenar genişliği</string>
+    <string name="opt_edge_left">Sol kenar</string>
+    <string name="opt_edge_right">Sağ kenar</string>
+    <string name="card_font">Yazı tipi</string>
+    <string name="font_auto">Otomatik (yuvarlak)</string>
+    <string name="font_default">Sistem varsayılanı</string>
+    <string name="font_import">Font dosyası içe aktar…</string>
+    <string name="font_weight">Kalınlık</string>
+    <string name="font_round">Yuvarlaklık (değişken fontlar)</string>
+    <string name="font_scale">Yazı boyutu</string>
+    <string name="font_spacing">Harf aralığı</string>
+    <string name="font_imported">Font içe aktarıldı</string>
+    <string name="credits_fonts">Yazı tipleri: Nunito, Quicksand, Fredoka, Outfit, Manrope, Baloo 2, Comfortaa, DM Sans (SIL Open Font License), derleme sırasında indirilir.</string>
 </resources>

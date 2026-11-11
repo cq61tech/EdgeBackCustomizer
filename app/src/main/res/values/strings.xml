@@ -120,4 +120,33 @@
     <string name="toast_exported">Settings exported</string>
     <string name="toast_imported">Settings imported</string>
     <string name="toast_failed">Something went wrong</string>
+    <string name="card_size">Size and shape</string>
+    <string name="custom_colors_title">Custom colors</string>
+    <string name="custom_colors_summary">Pick the colors yourself instead of using the app theme</string>
+    <string name="color_bg">Pill color</string>
+    <string name="color_arrow">Arrow color</string>
+    <string name="color_grad">Gradient end color</string>
+    <string name="hue">Hue</string>
+    <string name="saturation">Saturation</string>
+    <string name="lightness">Lightness</string>
+    <string name="grad_angle">Gradient angle</string>
+    <string name="opt_width">Width multiplier</string>
+    <string name="opt_height">Height multiplier</string>
+    <string name="opt_arrow_size">Arrow size</string>
+    <string name="opt_arrow_stroke">Arrow thickness (0 = stock)</string>
+    <string name="opt_glow">Glow</string>
+    <string name="opt_offset">Vertical offset</string>
+    <string name="opt_edge_width">Edge width</string>
+    <string name="opt_edge_left">Left edge</string>
+    <string name="opt_edge_right">Right edge</string>
+    <string name="card_font">Font</string>
+    <string name="font_auto">Auto (rounded)</string>
+    <string name="font_default">System default</string>
+    <string name="font_import">Import font file…</string>
+    <string name="font_weight">Weight</string>
+    <string name="font_round">Roundness (variable fonts)</string>
+    <string name="font_scale">Text size</string>
+    <string name="font_spacing">Letter spacing</string>
+    <string name="font_imported">Font imported</string>
+    <string name="credits_fonts">Fonts: Nunito, Quicksand, Fredoka, Outfit, Manrope, Baloo 2, Comfortaa, DM Sans (SIL Open Font License), downloaded at build time.</string>
 </resources>

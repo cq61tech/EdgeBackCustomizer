@@ -11,6 +11,7 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
@@ -34,6 +35,10 @@ fun greenFor(primary: Color, dark: Boolean): StatusColors {
 
 private fun hsl(h: Float, s: Float, l: Float): Color =
     Color.hsl(((h % 360f) + 360f) % 360f, s, l)
+
+/** Hue in degrees, saturation and lightness in percent. */
+fun hslColor(h: Float, s: Float, l: Float): Color =
+    Color.hsl(((h % 360f) + 360f) % 360f, (s / 100f).coerceIn(0f, 1f), (l / 100f).coerceIn(0f, 1f))
 
 /** Builds a full palette from a single hue (used when Monet is off). */
 private fun accentScheme(hue: Float, dark: Boolean, amoled: Boolean): ColorScheme {
@@ -127,8 +132,18 @@ fun EbcTheme(prefs: Prefs, content: @Composable () -> Unit) {
     } else {
         accentScheme(prefs.accentHue.value, dark, amoled)
     }
+    val typography = remember(
+        prefs.fontId.value, prefs.fontWeight.value, prefs.fontRound.value,
+        prefs.fontScale.value, prefs.fontSpacing.value,
+    ) {
+        AppFonts.typography(
+            ctx, prefs.fontId.value, prefs.fontWeight.value, prefs.fontRound.value,
+            prefs.fontScale.value, prefs.fontSpacing.value,
+        )
+    }
     MaterialTheme(
         colorScheme = scheme,
+        typography = typography,
         shapes = Shapes(
             small = RoundedCornerShape(14.dp),
             medium = RoundedCornerShape(20.dp),

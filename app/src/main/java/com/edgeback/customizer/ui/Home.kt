@@ -147,10 +147,7 @@ private fun Hero() {
             text = stringResource(R.string.quote),
             color = Color.White,
             textAlign = TextAlign.Start,
-            style = TextStyle(
-                fontWeight = FontWeight.Medium,
-                fontSize = 25.sp,
-                lineHeight = 33.sp,
+            style = MaterialTheme.typography.headlineMedium.copy(
                 shadow = Shadow(Color(0x99000000), Offset(0f, 2f), 6f),
             ),
             modifier = Modifier
@@ -325,6 +322,11 @@ private fun CreditsCard() {
     val uri = LocalUriHandler.current
     SectionCard(stringResource(R.string.credits_title)) {
         Text(stringResource(R.string.credits_body), style = MaterialTheme.typography.bodyLarge)
+        Text(
+            stringResource(R.string.credits_fonts),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
         TextButton(onClick = { uri.openUri(REPO_URL) }) {
             Text(stringResource(R.string.repo_button))
         }

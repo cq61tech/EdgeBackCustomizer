@@ -121,6 +121,37 @@ class Prefs(ctx: Context) {
     val zonePercent = reg(FloatPref(sp, "zone_percent", 100f))
     val haptic = reg(BoolPref(sp, "haptic", true))
 
+    // pill: custom colors (HSL), gradient angle, shape
+    val pillColorCustom = reg(BoolPref(sp, "pill_color_custom", false))
+    val bgH = reg(FloatPref(sp, "bg_h", 246f))
+    val bgS = reg(FloatPref(sp, "bg_s", 78f))
+    val bgL = reg(FloatPref(sp, "bg_l", 73f))
+    val fgH = reg(FloatPref(sp, "fg_h", 246f))
+    val fgS = reg(FloatPref(sp, "fg_s", 65f))
+    val fgL = reg(FloatPref(sp, "fg_l", 19f))
+    val g2H = reg(FloatPref(sp, "g2_h", 300f))
+    val g2S = reg(FloatPref(sp, "g2_s", 70f))
+    val g2L = reg(FloatPref(sp, "g2_l", 70f))
+    val gradAngle = reg(FloatPref(sp, "grad_angle", 90f))
+    val pillW = reg(FloatPref(sp, "pill_w", 100f))               // % width multiplier
+    val pillH = reg(FloatPref(sp, "pill_h", 100f))               // % height multiplier
+    val arrowSize = reg(FloatPref(sp, "arrow_size", 100f))       // %
+    val arrowStroke = reg(FloatPref(sp, "arrow_stroke", 0f))     // dp, 0 = stock
+    val glow = reg(FloatPref(sp, "glow", 0f))                    // dp
+    val offsetY = reg(FloatPref(sp, "offset_y", 0f))             // dp
+
+    // edges
+    val edgeLeft = reg(BoolPref(sp, "edge_left", true))
+    val edgeRight = reg(BoolPref(sp, "edge_right", true))
+    val edgeWidth = reg(FloatPref(sp, "edge_width", 100f))       // % of the stock trigger width
+
+    // font
+    val fontId = reg(StringPref(sp, "font_id", "auto"))
+    val fontWeight = reg(FloatPref(sp, "font_weight", 600f))
+    val fontRound = reg(FloatPref(sp, "font_round", 100f))
+    val fontScale = reg(FloatPref(sp, "font_scale", 100f))
+    val fontSpacing = reg(FloatPref(sp, "font_spacing", 0f))     // thousandths of an em
+
     // module
     val enableHooks = reg(BoolPref(sp, "enable_hooks", true))
     val debugLog = reg(BoolPref(sp, "debug_log", false))
