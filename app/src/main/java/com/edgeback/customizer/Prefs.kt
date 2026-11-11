@@ -113,7 +113,9 @@ class Prefs(ctx: Context) {
     val dockLabels = reg(BoolPref(sp, "dock_labels", false))
 
     // customization (not yet applied to the system gesture)
-    val pillAlpha = reg(FloatPref(sp, "pill_alpha", 90f))       // %
+    val pillLook = reg(BoolPref(sp, "pill_look", false))
+    val pillGradient = reg(BoolPref(sp, "pill_gradient", false))
+    val pillAlpha = reg(FloatPref(sp, "pill_alpha", 100f))      // %
     val pillRound = reg(FloatPref(sp, "pill_round", 100f))      // % (100 = full circle)
     val pillScale = reg(FloatPref(sp, "pill_scale", 1f))
     val zonePercent = reg(FloatPref(sp, "zone_percent", 100f))

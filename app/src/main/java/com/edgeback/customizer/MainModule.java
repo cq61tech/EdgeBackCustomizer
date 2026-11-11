@@ -1,5 +1,6 @@
 package com.edgeback.customizer;
 
+import android.graphics.Canvas;
 import android.os.Build;
 import android.util.Log;
 
@@ -203,6 +204,46 @@ public class MainModule extends XposedModule {
             line("core: onInputEvent hook installed");
         } catch (Throwable t) {
             line("core: hook failed " + t);
+        }
+
+        // pill look: wrap BackPanel.onDraw
+        Class<?> panel = load(cl, KNOWN[2]);
+        Method draw = null;
+        if (panel != null) {
+            for (Method x : panel.getDeclaredMethods()) {
+                if (x.getName().equals("onDraw") && x.getParameterTypes().length == 1) draw = x;
+            }
+        }
+        if (draw == null) {
+            line("core: BackPanel.onDraw missing");
+            return;
+        }
+        try {
+            hook((Executable) draw).intercept(chain -> {
+                Object view = chain.getThisObject();
+                Object arg = chain.getArg(0);
+                Canvas canvas = arg instanceof Canvas ? (Canvas) arg : null;
+                Core.DrawState state = null;
+                if (canvas != null) {
+                    try {
+                        state = Core.beforeDraw(view, canvas);
+                    } catch (Throwable ignored) {
+                    }
+                }
+                try {
+                    return chain.proceed();
+                } finally {
+                    if (canvas != null) {
+                        try {
+                            Core.afterDraw(canvas, state);
+                        } catch (Throwable ignored) {
+                        }
+                    }
+                }
+            });
+            line("core: BackPanel.onDraw hook installed");
+        } catch (Throwable t) {
+            line("core: draw hook failed " + t);
         }
     }
 

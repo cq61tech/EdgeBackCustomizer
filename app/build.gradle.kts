@@ -12,8 +12,8 @@ android {
         applicationId = "com.edgeback.customizer"
         minSdk = 31
         targetSdk = 36
-        versionCode = 6
-        versionName = "0.3.0-phase1"
+        versionCode = 7
+        versionName = "0.4.0-phase2"
     }
 
     // Fixed debug key: every CI build is signed the same way, so new APKs install over old ones.

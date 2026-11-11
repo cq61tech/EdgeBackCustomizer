@@ -13,7 +13,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
@@ -53,11 +55,21 @@ fun CustomizeScreen(prefs: Prefs) {
                 val cx = size.width / 2f
                 val cy = size.height / 2f
                 val rad = (dia / 2f) * (prefs.pillRound.value / 100f)
+                val brush = if (prefs.pillGradient.value) {
+                    Brush.verticalGradient(
+                        listOf(cs.primary, cs.tertiary),
+                        startY = cy - dia / 2f,
+                        endY = cy + dia / 2f,
+                    )
+                } else {
+                    SolidColor(cs.primary)
+                }
                 drawRoundRect(
-                    color = cs.primaryContainer.copy(alpha = prefs.pillAlpha.value / 100f),
+                    brush = brush,
                     topLeft = Offset(cx - dia / 2f, cy - dia / 2f),
                     size = Size(dia, dia),
                     cornerRadius = CornerRadius(rad, rad),
+                    alpha = prefs.pillAlpha.value / 100f,
                 )
                 val a = dia * 0.11f
                 val arrow = Path().apply {
@@ -67,7 +79,7 @@ fun CustomizeScreen(prefs: Prefs) {
                 }
                 drawPath(
                     arrow,
-                    color = cs.onPrimaryContainer,
+                    color = cs.onPrimary,
                     style = Stroke(width = 5f * d * sc, cap = StrokeCap.Round, join = StrokeJoin.Round),
                 )
             }
@@ -85,6 +97,16 @@ fun CustomizeScreen(prefs: Prefs) {
         )
 
         SectionCard(stringResource(R.string.card_pill)) {
+            SwitchRow(
+                stringResource(R.string.look_title),
+                stringResource(R.string.look_summary),
+                prefs.pillLook.value,
+            ) { prefs.pillLook.value = it }
+            SwitchRow(
+                stringResource(R.string.gradient_title),
+                stringResource(R.string.gradient_summary),
+                prefs.pillGradient.value,
+            ) { prefs.pillGradient.value = it }
             SliderRow(stringResource(R.string.opt_alpha), prefs.pillAlpha.value, 20f..100f, "%") {
                 prefs.pillAlpha.value = it
             }

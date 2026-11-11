@@ -16,7 +16,7 @@
     <string name="row_hooks">Back gesture hooks</string>
     <string name="status_active">Active (%1$s %2$s · API %3$s)</string>
     <string name="status_inactive">Not connected</string>
-    <string name="hooks_loaded">Loaded in System UI (haptics + zone)</string>
+    <string name="hooks_loaded">Loaded in System UI (zone, haptics, look)</string>
     <string name="hooks_not_loaded">Not loaded in System UI</string>
     <string name="hooks_discovery">Discovery build (no changes yet)</string>
     <string name="status_on_note">The module is injected. Changes apply after System UI restarts.</string>
@@ -57,11 +57,15 @@
     <string name="preview_title">Live preview</string>
     <string name="preview_caption">Approximate preview. The real pill is drawn by System UI.</string>
     <string name="preview_tip">Tip: tap a value to type it exactly</string>
-    <string name="customize_note">Active zone and haptic feedback already apply to the real gesture. The look options come in the next phase.</string>
+    <string name="customize_note">Active zone, haptics and the pill look apply to the real gesture live. The pill uses your app colors.</string>
     <string name="card_pill">Pill style</string>
     <string name="card_behavior">Behavior</string>
+    <string name="look_title">Custom look</string>
+    <string name="look_summary">Applies color, opacity, size and roundness to the real back pill</string>
+    <string name="gradient_title">Gradient</string>
+    <string name="gradient_summary">Blend the accent color into a second color</string>
     <string name="opt_alpha">Opacity</string>
-    <string name="opt_radius">Roundness</string>
+    <string name="opt_radius">Roundness (100% = fully round)</string>
     <string name="opt_scale">Size multiplier</string>
     <string name="opt_zone">Active zone (bottom %)</string>
     <string name="opt_haptic">Haptic feedback</string>

@@ -24,6 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -64,9 +65,16 @@ private fun App(prefs: Prefs) {
 
     // keep System UI in sync with the settings (debounced while a slider is dragged)
     val ctx = LocalContext.current
-    LaunchedEffect(prefs.enableHooks.value, prefs.haptic.value, prefs.zonePercent.value) {
+    val cs = MaterialTheme.colorScheme
+    val colors = ConfigSync.Colors(cs.primary.toArgb(), cs.onPrimary.toArgb(), cs.tertiary.toArgb())
+    LaunchedEffect(
+        prefs.enableHooks.value, prefs.haptic.value, prefs.zonePercent.value,
+        prefs.pillLook.value, prefs.pillGradient.value, prefs.pillAlpha.value,
+        prefs.pillScale.value, prefs.pillRound.value,
+        colors.bg, colors.fg, colors.bg2,
+    ) {
         delay(300)
-        withContext(Dispatchers.IO) { ConfigSync.push(ctx, prefs) }
+        withContext(Dispatchers.IO) { ConfigSync.push(ctx, prefs, colors) }
     }
 
     Surface(

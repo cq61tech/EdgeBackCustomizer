@@ -15,7 +15,7 @@
     <string name="row_hooks">Geri hareketi hook\'ları</string>
     <string name="status_active">Etkin (%1$s %2$s · API %3$s)</string>
     <string name="status_inactive">Bağlı değil</string>
-    <string name="hooks_loaded">Sistem Arayüzü\'nde yüklü (titreşim + bölge)</string>
+    <string name="hooks_loaded">Sistem Arayüzü\'nde yüklü (bölge, titreşim, görünüm)</string>
     <string name="hooks_not_loaded">Sistem Arayüzü\'nde yüklü değil</string>
     <string name="hooks_discovery">Keşif sürümü (henüz değişiklik yok)</string>
     <string name="status_on_note">Modül yüklendi. Değişiklikler Sistem Arayüzü yeniden başlayınca uygulanır.</string>
@@ -56,11 +56,15 @@
     <string name="preview_title">Canlı önizleme</string>
     <string name="preview_caption">Yaklaşık önizleme. Gerçek baloncuğu Sistem Arayüzü çizer.</string>
     <string name="preview_tip">İpucu: tam değer yazmak için değere dokun</string>
-    <string name="customize_note">Aktif bölge ve titreşim gerçek harekete şimdiden uygulanıyor. Görünüm seçenekleri bir sonraki aşamada.</string>
+    <string name="customize_note">Aktif bölge, titreşim ve baloncuk görünümü gerçek harekete canlı uygulanır. Baloncuk uygulama renklerini kullanır.</string>
     <string name="card_pill">Baloncuk stili</string>
     <string name="card_behavior">Davranış</string>
+    <string name="look_title">Özel görünüm</string>
+    <string name="look_summary">Renk, saydamlık, boyut ve yuvarlaklığı gerçek geri baloncuğuna uygular</string>
+    <string name="gradient_title">Gradyan</string>
+    <string name="gradient_summary">Vurgu rengini ikinci bir renge geçirir</string>
     <string name="opt_alpha">Saydamlık</string>
-    <string name="opt_radius">Köşe yuvarlaklığı</string>
+    <string name="opt_radius">Yuvarlaklık (%100 = tam yuvarlak)</string>
     <string name="opt_scale">Boyut çarpanı</string>
     <string name="opt_zone">Aktif bölge (alt %)</string>
     <string name="opt_haptic">Titreşim</string>
