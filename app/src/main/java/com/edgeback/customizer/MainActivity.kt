@@ -1,9 +1,11 @@
 package com.edgeback.customizer
 
+import android.content.Context
+import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.ComponentActivity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -36,8 +38,20 @@ import com.edgeback.customizer.ui.CustomizeScreen
 import com.edgeback.customizer.ui.Dock
 import com.edgeback.customizer.ui.HomeScreen
 import com.edgeback.customizer.ui.SettingsScreen
+import java.util.Locale
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : ComponentActivity() {
+    override fun attachBaseContext(base: Context) {
+        val tag = base.getSharedPreferences("ebc_prefs", MODE_PRIVATE).getString("lang", "").orEmpty()
+        if (tag.isEmpty()) {
+            super.attachBaseContext(base)
+        } else {
+            val config = Configuration(base.resources.configuration)
+            config.setLocale(Locale.forLanguageTag(tag))
+            super.attachBaseContext(base.createConfigurationContext(config))
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()

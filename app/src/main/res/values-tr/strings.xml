@@ -145,5 +145,6 @@
     <string name="font_scale">Yazı boyutu</string>
     <string name="font_spacing">Harf aralığı</string>
     <string name="font_imported">Font içe aktarıldı</string>
-    <string name="credits_fonts">Yazı tipleri: Nunito, Quicksand, Fredoka, Outfit, Manrope, Baloo 2, Comfortaa, DM Sans (SIL Open Font License), derleme sırasında indirilir.</string>
+    <string name="credits_fonts">Yazı tipleri: Nunito, Quicksand, Fredoka (SIL Open Font License), derleme sırasında indirilir.</string>
+    <string name="opt_outline">Kontur</string>
 </resources>

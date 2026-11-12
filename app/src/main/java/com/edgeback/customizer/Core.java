@@ -45,18 +45,23 @@ final class Core {
     private static volatile int leftOn = 1;
     private static volatile int rightOn = 1;
     private static volatile int edgeW = 100;
+    private static volatile int outline10 = 0;
     private static volatile long lastRead = 0;
+    static {
+        OUTLINE.setStyle(Paint.Style.STROKE);
+    }
     private static boolean dropping = false;
     private static boolean pluginDropping = false;
     private static volatile boolean gestureActive = false;
     private static volatile long gestureEnd = 0;
     private static volatile Boolean stockHaptic = null;
     private static final Paint GLOW = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private static final Paint OUTLINE = new Paint(Paint.ANTI_ALIAS_FLAG);
     private static final RectF RECT = new RectF();
 
     private static int origL = -1, origR = -1, setL = -1, setR = -1;
 
-    private static final ConcurrentHashMap<String, Field> FIELDS = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<Class<?>, ConcurrentHashMap<String, Field>> FIELDS = new ConcurrentHashMap<>();
     private static final AtomicInteger DBG = new AtomicInteger();
     private static final AtomicInteger DBG_DRAW = new AtomicInteger();
     private static final AtomicInteger DBG_PLUGIN = new AtomicInteger();
@@ -180,6 +185,8 @@ final class Core {
         int saveCount = -1;
         Object edge, far, arrowLen, arrowHei;
         float edgeOrig, farOrig, lenOrig, heiOrig;
+        View view;
+        float bw, bh, corner, density;
     }
 
     static DrawState beforeDraw(Object view, Canvas canvas) {
@@ -274,6 +281,11 @@ final class Core {
             setFloat(st.edge, "pos", target);
             setFloat(st.far, "pos", target);
         }
+        st.view = v;
+        st.bw = bwv;
+        st.bh = bhv;
+        st.corner = target;
+        st.density = density;
 
         if (arrowSize != 100) {
             st.arrowLen = get(view, "arrowLength");
@@ -292,22 +304,25 @@ final class Core {
         return st;
     }
 
-    private static void drawGlow(Object view, Canvas canvas, View v, float bw, float bh, float density) {
+    private static float enterPillSpace(Object view, Canvas canvas, View v) {
         boolean left = Boolean.TRUE.equals(get(view, "isLeftPanel"));
         float ht = getFloat(get(view, "horizontalTranslation"), "pos", 0f);
         float vt = getFloat(get(view, "verticalTranslation"), "pos", 0f);
         float sc = getFloat(get(view, "scale"), "pos", 1f);
         float px = getFloat(get(view, "scalePivotX"), "pos", 0f);
-        float fade = Math.min(getFloat(get(view, "backgroundAlpha"), "pos", 1f),
-                getFloat(get(view, "arrowAlpha"), "pos", 1f));
-        float corner = Math.min(bw, bh) / 2f * (round / 100f);
-        int steps = 7;
-        float reach = glow * density;
-
         canvas.save();
         if (!left) canvas.scale(-1f, 1f, v.getWidth() / 2f, 0f);
         canvas.translate(ht, v.getHeight() * 0.5f + vt);
         canvas.scale(sc, sc, px, 0f);
+        return Math.min(getFloat(get(view, "backgroundAlpha"), "pos", 1f),
+                getFloat(get(view, "arrowAlpha"), "pos", 1f));
+    }
+
+    private static void drawGlow(Object view, Canvas canvas, View v, float bw, float bh, float density) {
+        float fade = enterPillSpace(view, canvas, v);
+        float corner = Math.min(bw, bh) / 2f * (round / 100f);
+        int steps = 7;
+        float reach = glow * density;
         for (int i = steps; i >= 1; i--) {
             float grow = reach * i / steps;
             GLOW.setColor(bg);
@@ -318,8 +333,22 @@ final class Core {
         canvas.restore();
     }
 
+    private static void drawOutline(DrawState st, Canvas canvas) {
+        float fade = enterPillSpace(st.view, canvas, st.view);
+        float w = outline10 / 10f * st.density;
+        float in = w / 2f;
+        OUTLINE.setColor(fg);
+        OUTLINE.setAlpha(Math.round(255f * fade));
+        OUTLINE.setStrokeWidth(w);
+        RECT.set(in, -st.bh / 2f + in, st.bw - in, st.bh / 2f - in);
+        float r = Math.max(0f, st.corner - in);
+        canvas.drawRoundRect(RECT, r, r, OUTLINE);
+        canvas.restore();
+    }
+
     static void afterDraw(Canvas canvas, DrawState st) {
         if (st == null) return;
+        if (st.view != null && outline10 > 0 && st.bw > 0f && st.bh > 0f) drawOutline(st, canvas);
         if (st.saveCount >= 0) canvas.restoreToCount(st.saveCount);
         setFloat(st.edge, "pos", st.edgeOrig);
         setFloat(st.far, "pos", st.farOrig);
@@ -359,6 +388,7 @@ final class Core {
             leftOn = num(p, 18, 1);
             rightOn = num(p, 19, 1);
             edgeW = clamp(num(p, 20, 100), 30, 400);
+            outline10 = clamp(num(p, 21, 0), 0, 120);
         } catch (Throwable ignored) {
         }
     }
@@ -404,14 +434,18 @@ final class Core {
     }
 
     private static Field field(Class<?> c, String name) {
-        String key = c.getName() + "#" + name;
-        Field cached = FIELDS.get(key);
+        ConcurrentHashMap<String, Field> perClass = FIELDS.get(c);
+        if (perClass == null) {
+            perClass = new ConcurrentHashMap<>();
+            FIELDS.put(c, perClass);
+        }
+        Field cached = perClass.get(name);
         if (cached != null) return cached;
         for (Class<?> k = c; k != null; k = k.getSuperclass()) {
             try {
                 Field f = k.getDeclaredField(name);
                 f.setAccessible(true);
-                FIELDS.put(key, f);
+                perClass.put(name, f);
                 return f;
             } catch (NoSuchFieldException ignored) {
             }

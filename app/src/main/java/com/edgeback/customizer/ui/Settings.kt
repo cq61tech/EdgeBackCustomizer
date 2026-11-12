@@ -5,7 +5,6 @@ import android.provider.OpenableColumns
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -13,8 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -33,7 +30,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import java.io.File
-import androidx.core.os.LocaleListCompat
 import com.edgeback.customizer.AppFonts
 import com.edgeback.customizer.ModuleStatus
 import com.edgeback.customizer.Prefs
@@ -41,11 +37,6 @@ import com.edgeback.customizer.R
 import com.edgeback.customizer.setLauncherIconHidden
 
 private class Entry(val keywords: String, val content: @Composable () -> Unit)
-
-private fun currentLanguageTag(): String {
-    val l = AppCompatDelegate.getApplicationLocales()
-    return if (l.isEmpty()) "" else (l.get(0)?.language ?: "")
-}
 
 @Composable
 fun SettingsScreen(prefs: Prefs) {
@@ -126,7 +117,8 @@ fun SettingsScreen(prefs: Prefs) {
         }
     }
 
-    val langTag = currentLanguageTag()
+    val activity = rememberActivity()
+    val langTag = prefs.lang.value
     val entries = listOf(
         Entry(tLang) {
             SectionCard(tLang) {
@@ -143,13 +135,10 @@ fun SettingsScreen(prefs: Prefs) {
                         FilterChip(
                             selected = langTag == tag,
                             onClick = {
-                                AppCompatDelegate.setApplicationLocales(
-                                    if (tag.isEmpty()) {
-                                        LocaleListCompat.getEmptyLocaleList()
-                                    } else {
-                                        LocaleListCompat.forLanguageTags(tag)
-                                    },
-                                )
+                                if (prefs.lang.value != tag) {
+                                    prefs.lang.value = tag
+                                    activity?.recreate()
+                                }
                             },
                             label = { Text(stringResource(res)) },
                         )
@@ -298,7 +287,7 @@ fun SettingsScreen(prefs: Prefs) {
             onValueChange = { query = it },
             singleLine = true,
             shape = RoundedCornerShape(28.dp),
-            leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+            leadingIcon = { Icon(AppIcons.Search, contentDescription = null) },
             placeholder = { Text(stringResource(R.string.search_hint)) },
             modifier = Modifier.fillMaxWidth(),
         )

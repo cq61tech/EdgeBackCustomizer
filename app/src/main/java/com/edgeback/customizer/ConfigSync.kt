@@ -19,6 +19,7 @@ object ConfigSync {
             p.arrowSize.value.roundToInt(), (p.arrowStroke.value * 10f).roundToInt(),
             p.glow.value.roundToInt(), p.offsetY.value.roundToInt(),
             b(p.edgeLeft.value), b(p.edgeRight.value), p.edgeWidth.value.roundToInt(),
+            (p.outline.value * 10f).roundToInt(),
         ).joinToString(",")
     }
 

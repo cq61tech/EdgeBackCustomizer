@@ -16,7 +16,10 @@ object AppFonts {
 
     private val cache = HashMap<String, Typeface?>()
 
-    fun clearCache() = cache.clear()
+    fun clearCache() {
+        cache.clear()
+        autoId = null
+    }
 
     fun gsfPath(): String? {
         val rx = Regex("(?i).*google.?sans.?flex.*\\.(ttf|otf)")
@@ -53,7 +56,11 @@ object AppFonts {
         return list
     }
 
-    private fun resolveAuto(ctx: Context): String {
+    private var autoId: String? = null
+
+    private fun resolveAuto(ctx: Context): String = autoId ?: pickAuto(ctx).also { autoId = it }
+
+    private fun pickAuto(ctx: Context): String {
         if (gsfPath() != null) return "gsf"
         val assets = assetFonts(ctx)
         for (name in listOf("Nunito.ttf", "Quicksand.ttf", "Fredoka.ttf", "Outfit.ttf")) {

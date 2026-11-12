@@ -100,6 +100,9 @@ class Prefs(ctx: Context) {
     val accentHue = reg(FloatPref(sp, "accent_hue", 246f))
     val amoled = reg(BoolPref(sp, "amoled", false))
 
+    val lang = reg(StringPref(sp, "lang", ""))
+    val outline = reg(FloatPref(sp, "outline", 0f))
+
     val dockFloating = reg(BoolPref(sp, "dock_floating", true))
     val dockWidth = reg(FloatPref(sp, "dock_width", 50f))
     val dockHeight = reg(FloatPref(sp, "dock_height", 61f))

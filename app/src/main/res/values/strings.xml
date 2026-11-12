@@ -148,5 +148,6 @@
     <string name="font_scale">Text size</string>
     <string name="font_spacing">Letter spacing</string>
     <string name="font_imported">Font imported</string>
-    <string name="credits_fonts">Fonts: Nunito, Quicksand, Fredoka, Outfit, Manrope, Baloo 2, Comfortaa, DM Sans (SIL Open Font License), downloaded at build time.</string>
+    <string name="credits_fonts">Fonts: Nunito, Quicksand, Fredoka (SIL Open Font License), downloaded at build time.</string>
+    <string name="opt_outline">Outline</string>
 </resources>

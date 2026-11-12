@@ -1,5 +1,7 @@
 package com.edgeback.customizer.ui
 
+import android.app.Activity
+import android.content.ContextWrapper
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -225,4 +227,14 @@ fun rememberRestartSystemUi(): () -> Unit {
         }
         action
     }
+}
+
+@Composable
+fun rememberActivity(): Activity? {
+    var c = LocalContext.current
+    while (c is ContextWrapper) {
+        if (c is Activity) return c
+        c = c.baseContext
+    }
+    return null
 }

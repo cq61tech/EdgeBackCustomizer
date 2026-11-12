@@ -13,10 +13,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -36,9 +32,9 @@ import com.edgeback.customizer.R
 private class DockItem(val icon: ImageVector, val labelRes: Int)
 
 private val items = listOf(
-    DockItem(Icons.Filled.Home, R.string.nav_home),
-    DockItem(Icons.Filled.Edit, R.string.nav_customize),
-    DockItem(Icons.Filled.Settings, R.string.nav_settings),
+    DockItem(AppIcons.Home, R.string.nav_home),
+    DockItem(AppIcons.Edit, R.string.nav_customize),
+    DockItem(AppIcons.Settings, R.string.nav_settings),
 )
 
 @Composable

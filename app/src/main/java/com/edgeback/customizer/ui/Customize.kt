@@ -115,6 +115,9 @@ fun CustomizeScreen(prefs: Prefs) {
             SliderRow(stringResource(R.string.opt_arrow_stroke), prefs.arrowStroke.value, 0f..12f, " dp", decimals = 1) {
                 prefs.arrowStroke.value = it
             }
+            SliderRow(stringResource(R.string.opt_outline), prefs.outline.value, 0f..8f, " dp", decimals = 1) {
+                prefs.outline.value = it
+            }
             SliderRow(stringResource(R.string.opt_offset), prefs.offsetY.value, -200f..200f, " dp") {
                 prefs.offsetY.value = it
             }
@@ -209,6 +212,17 @@ private fun PreviewCard(prefs: Prefs) {
                 cornerRadius = CornerRadius(rad, rad),
                 alpha = prefs.pillAlpha.value / 100f,
             )
+            if (prefs.outline.value > 0f) {
+                val ow = prefs.outline.value * d
+                drawRoundRect(
+                    color = arrowC,
+                    topLeft = Offset(cx - bw / 2f + ow / 2f, cy - bh / 2f + ow / 2f),
+                    size = Size(bw - ow, bh - ow),
+                    cornerRadius = CornerRadius(maxOf(0f, rad - ow / 2f), maxOf(0f, rad - ow / 2f)),
+                    style = Stroke(width = ow),
+                    alpha = prefs.pillAlpha.value / 100f,
+                )
+            }
             val k = prefs.arrowSize.value / 100f
             val ax = min(bw, bh) * 0.11f * k
             val ay = min(bw, bh) * 0.20f * k

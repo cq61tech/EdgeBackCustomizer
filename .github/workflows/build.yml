@@ -1,4 +1,4 @@
-name: Build debug APK
+name: Build
 
 on:
   push:
@@ -20,49 +20,33 @@ jobs:
         with:
           gradle-version: '8.14.3'
 
-      - name: Download fonts (SIL OFL, from google/fonts)
+      - name: Fetch fonts
         shell: bash
         continue-on-error: true
         run: |
           mkdir -p app/src/main/assets/fonts
           base="https://raw.githubusercontent.com/google/fonts/main/ofl"
-          dl() { curl -fsSL "$base/$1" -o "app/src/main/assets/fonts/$2" || { echo "skip $2"; rm -f "app/src/main/assets/fonts/$2"; }; }
+          dl() { curl -fsSL "$base/$1" -o "app/src/main/assets/fonts/$2" || rm -f "app/src/main/assets/fonts/$2"; }
           dl 'nunito/Nunito%5Bwght%5D.ttf' Nunito.ttf
           dl 'quicksand/Quicksand%5Bwght%5D.ttf' Quicksand.ttf
           dl 'fredoka/Fredoka%5Bwdth%2Cwght%5D.ttf' Fredoka.ttf
-          dl 'outfit/Outfit%5Bwght%5D.ttf' Outfit.ttf
-          dl 'manrope/Manrope%5Bwght%5D.ttf' Manrope.ttf
-          dl 'baloo2/Baloo2%5Bwght%5D.ttf' Baloo2.ttf
-          dl 'comfortaa/Comfortaa%5Bwght%5D.ttf' Comfortaa.ttf
-          dl 'dmsans/DMSans%5Bopsz%2Cwght%5D.ttf' DMSans.ttf
-          ls -la app/src/main/assets/fonts
 
       - name: Build
         shell: bash
-        run: gradle :app:assembleDebug --stacktrace --console=plain 2>&1 | tee build.log
+        run: gradle :app:assembleRelease --console=plain 2>&1 | tee build.log
 
-      - name: Error summary
+      - name: Errors
         if: failure()
         run: |
           {
             echo '### Build errors'
             echo '```'
-            grep -nE "^e: |error:|What went wrong|Execution failed|Caused by|requires" -A4 build.log | head -80
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Kotlin errors
-        if: failure()
-        run: |
-          {
-            echo '### Kotlin errors'
-            echo '```'
-            grep -E '^e: ' build.log | sed 's#file:///home/runner/work/[^/]*/[^/]*/##' | cut -c1-400 | fold -w 70
+            grep -E '^e: |error:|What went wrong|Execution failed|Caused by' -A3 build.log | sed 's#file:///home/runner/work/[^/]*/[^/]*/##' | cut -c1-300 | head -80
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@v4
         if: success()
         with:
-          name: EdgeBackCustomizer-debug
-          path: app/build/outputs/apk/debug/*.apk
+          name: EdgeBackCustomizer
+          path: app/build/outputs/apk/release/*.apk

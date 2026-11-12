@@ -16,10 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -185,7 +181,7 @@ private fun StatusCard(tick: Int, host: HostStatus?, onRestart: () -> Unit, onRe
         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                 Icon(
-                    if (on) Icons.Filled.CheckCircle else Icons.Filled.Warning,
+                    if (on) AppIcons.CheckCircle else AppIcons.Warning,
                     contentDescription = null,
                     modifier = Modifier.size(32.dp),
                 )
@@ -271,7 +267,7 @@ private fun WhatCanCard(onClick: () -> Unit) {
                 Modifier.size(48.dp).clip(CircleShape).background(cs.primary),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(Icons.Filled.Star, contentDescription = null, tint = cs.onPrimary)
+                Icon(AppIcons.Star, contentDescription = null, tint = cs.onPrimary)
             }
             Column {
                 Text(stringResource(R.string.whatcan_title), style = MaterialTheme.typography.titleLarge)
