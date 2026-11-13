@@ -47,9 +47,6 @@ final class Core {
     private static volatile int edgeW = 100;
     private static volatile int outline10 = 0;
     private static volatile long lastRead = 0;
-    static {
-        OUTLINE.setStyle(Paint.Style.STROKE);
-    }
     private static boolean dropping = false;
     private static boolean pluginDropping = false;
     private static volatile boolean gestureActive = false;
@@ -337,6 +334,7 @@ final class Core {
         float fade = enterPillSpace(st.view, canvas, st.view);
         float w = outline10 / 10f * st.density;
         float in = w / 2f;
+        OUTLINE.setStyle(Paint.Style.STROKE);
         OUTLINE.setColor(fg);
         OUTLINE.setAlpha(Math.round(255f * fade));
         OUTLINE.setStrokeWidth(w);
