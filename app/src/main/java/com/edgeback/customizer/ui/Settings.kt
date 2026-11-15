@@ -31,6 +31,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import java.io.File
 import com.edgeback.customizer.AppFonts
+import com.edgeback.customizer.AppLanguages
 import com.edgeback.customizer.ModuleStatus
 import com.edgeback.customizer.Prefs
 import com.edgeback.customizer.R
@@ -126,12 +127,7 @@ fun SettingsScreen(prefs: Prefs) {
                     Modifier.horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    val options = listOf(
-                        "" to R.string.language_system,
-                        "en" to R.string.language_en,
-                        "tr" to R.string.language_tr,
-                    )
-                    options.forEach { (tag, res) ->
+                    AppLanguages.all.forEach { (tag, name) ->
                         FilterChip(
                             selected = langTag == tag,
                             onClick = {
@@ -140,7 +136,7 @@ fun SettingsScreen(prefs: Prefs) {
                                     activity?.recreate()
                                 }
                             },
-                            label = { Text(stringResource(res)) },
+                            label = { Text(if (tag.isEmpty()) stringResource(R.string.language_system) else name) },
                         )
                     }
                 }

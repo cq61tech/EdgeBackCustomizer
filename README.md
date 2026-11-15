@@ -10,7 +10,7 @@ status and restart helpers.
   size (uniform, width, height), arrow size and thickness, outline, vertical offset
 - Active zone (bottom percentage), left/right edge switches, edge trigger width
 - Haptic feedback on/off
-- App UI: Material 3 with Monet, accent color, AMOLED mode, floating dock, English and Turkish,
+- App UI: Material 3 with Monet, accent color, AMOLED mode, floating dock, 18 languages (English, Türkçe, Русский, Deutsch, Français, Español, Italiano, Português, Nederlands, Polski, Українська, العربية, हिन्दी, Bahasa Indonesia, 日本語, 한국어, 简体中文, Tiếng Việt),
   custom fonts, settings backup and restore
 
 ## Setup

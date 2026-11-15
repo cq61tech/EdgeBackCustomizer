@@ -12,9 +12,11 @@ android {
         applicationId = "com.edgeback.customizer"
         minSdk = 31
         targetSdk = 36
-        versionCode = 10
-        versionName = "0.6.0"
-        resourceConfigurations += listOf("en", "tr")
+        versionCode = 11
+        versionName = "0.7.0"
+        resourceConfigurations += listOf(
+            "en", "tr", "ru", "de", "fr", "es", "it", "pt", "nl", "pl", "uk", "ar", "hi", "in", "ja", "ko", "zh-rCN", "vi",
+        )
     }
 
     signingConfigs {
