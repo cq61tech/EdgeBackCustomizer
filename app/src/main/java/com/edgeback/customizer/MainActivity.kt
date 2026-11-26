@@ -57,7 +57,10 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         val prefs = Prefs(applicationContext)
         setContent {
-            EbcTheme(prefs) { App(prefs) }
+            EbcTheme(prefs) {
+                App(prefs)
+                com.edgeback.customizer.ui.CqStorePromptDialog()
+            }
         }
     }
 }
